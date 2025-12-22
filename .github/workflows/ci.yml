@@ -297,7 +297,7 @@ jobs:
   # =============================================================================
   
   msrv:
-    name: MSRV Check (Rust ${{ env.MSRV }})
+    name: MSRV Check (Rust 1.70.0)
     runs-on: ubuntu-latest
     needs: fmt
     steps:
@@ -311,10 +311,10 @@ jobs:
             libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
             libx11-dev libxcb1-dev
             
-      - name: Install Rust ${{ env.MSRV }}
+      - name: Install Rust 1.70.0
         uses: dtolnay/rust-action@master
         with:
-          toolchain: ${{ env.MSRV }}
+          toolchain: "1.70.0"
           
       - name: Check MSRV
         run: cargo check --all-features
