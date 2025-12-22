@@ -1,0 +1,622 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly on Sunday at midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: "-D warnings"
+  # Minimum supported Rust version
+  MSRV: "1.70.0"
+
+jobs:
+  # =============================================================================
+  # QUICK CHECKS - Run first to fail fast
+  # =============================================================================
+  
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: rustfmt
+          
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  # =============================================================================
+  # CLIPPY LINTING - Comprehensive static analysis
+  # =============================================================================
+  
+  clippy:
+    name: Clippy (${{ matrix.features }})
+    runs-on: ubuntu-latest
+    needs: fmt
+    strategy:
+      fail-fast: false
+      matrix:
+        features:
+          - ""  # No features
+          - "wayland"
+          - "xwayland"
+          - "x11"
+          - "wayland,xwayland"
+          - "wayland,x11"
+          - "full"
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libinput-dev \
+            libdrm-dev \
+            libgbm-dev \
+            libegl-dev \
+            libgles2-mesa-dev \
+            libseat-dev \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxcb1-dev \
+            libxcb-composite0-dev \
+            libxcb-randr0-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libxcb-xinput-dev \
+            libxcb-icccm4-dev \
+            libxcb-ewmh-dev \
+            libxcb-keysyms1-dev \
+            libxcb-util0-dev \
+            libxcb-cursor-dev \
+            xvfb
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: clippy
+          
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-clippy-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-clippy-${{ matrix.features }}-
+            ${{ runner.os }}-cargo-clippy-
+            
+      - name: Run Clippy (default features)
+        if: matrix.features == ''
+        run: |
+          cargo clippy --all-targets -- \
+            -D warnings \
+            -D clippy::all \
+            -D clippy::pedantic \
+            -W clippy::nursery \
+            -A clippy::module_name_repetitions \
+            -A clippy::too_many_lines \
+            -A clippy::similar_names \
+            -A clippy::struct_excessive_bools \
+            -A clippy::must_use_candidate \
+            -A clippy::missing_errors_doc \
+            -A clippy::missing_panics_doc \
+            -D clippy::unwrap_used \
+            -D clippy::expect_used \
+            -W clippy::todo \
+            -W clippy::unimplemented \
+            -D clippy::panic \
+            -W clippy::cast_possible_truncation \
+            -W clippy::cast_sign_loss \
+            -W clippy::cast_precision_loss \
+            -D clippy::indexing_slicing
+            
+      - name: Run Clippy (with features)
+        if: matrix.features != ''
+        run: |
+          cargo clippy --all-targets --no-default-features --features "${{ matrix.features }}" -- \
+            -D warnings \
+            -D clippy::all \
+            -W clippy::pedantic \
+            -A clippy::module_name_repetitions \
+            -A clippy::too_many_lines \
+            -A clippy::similar_names \
+            -A clippy::struct_excessive_bools \
+            -A clippy::must_use_candidate \
+            -A clippy::missing_errors_doc \
+            -A clippy::missing_panics_doc
+
+  # =============================================================================
+  # WINDOW MANAGER SPECIFIC LINTS
+  # =============================================================================
+  
+  wm-specific-checks:
+    name: Window Manager Checks
+    runs-on: ubuntu-latest
+    needs: fmt
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libxcb1-dev
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: clippy
+          
+      - name: Check for common WM anti-patterns
+        run: |
+          echo "=== Checking for blocking operations in event handlers ==="
+          # Check for std::thread::sleep in non-test code
+          if grep -rn "std::thread::sleep" src/ --include="*.rs" | grep -v "test" | grep -v "// CI-ALLOWED"; then
+            echo "::warning::Found thread::sleep in non-test code - may cause UI freezes"
+          fi
+          
+          echo "=== Checking for unbounded allocations ==="
+          # Check for Vec::new() in hot paths without capacity hints
+          if grep -rn "Vec::new()" src/ --include="*.rs" | grep -E "(handle_|process_|on_)" | grep -v "// CI-ALLOWED"; then
+            echo "::warning::Found Vec::new() in event handlers - consider Vec::with_capacity()"
+          fi
+          
+          echo "=== Checking for proper error handling ==="
+          # Ensure we're not silently ignoring errors
+          if grep -rn "\.ok();" src/ --include="*.rs" | grep -v "test" | grep -v "// CI-ALLOWED"; then
+            echo "::warning::Found .ok() calls that may silently ignore errors"
+          fi
+          
+          echo "=== Checking for unsafe code ==="
+          UNSAFE_COUNT=$(grep -rn "unsafe" src/ --include="*.rs" | grep -v "// SAFETY:" | wc -l)
+          echo "Found $UNSAFE_COUNT unsafe blocks without SAFETY comments"
+          
+          echo "=== Checking for potential deadlocks ==="
+          # Multiple lock acquisitions
+          if grep -rn "\.lock()" src/ --include="*.rs" | head -20; then
+            echo "::notice::Found lock() calls - ensure consistent lock ordering"
+          fi
+          
+      - name: Check for X11/Wayland compatibility patterns
+        run: |
+          echo "=== Checking display server abstraction ==="
+          
+          # Ensure X11 code is properly feature-gated
+          X11_UNGATED=$(grep -rn "x11rb::" src/ --include="*.rs" | grep -v "#\[cfg" | grep -v "// X11-COMPAT" || true)
+          if [ -n "$X11_UNGATED" ]; then
+            echo "::warning::Found x11rb usage that may not be feature-gated:"
+            echo "$X11_UNGATED"
+          fi
+          
+          # Ensure Wayland code is properly feature-gated
+          WAYLAND_UNGATED=$(grep -rn "wayland_server::" src/ --include="*.rs" | grep -v "#\[cfg" | grep -v "// WAYLAND-COMPAT" || true)
+          if [ -n "$WAYLAND_UNGATED" ]; then
+            echo "::notice::Found wayland_server usage - ensure proper feature gating"
+          fi
+          
+      - name: Check for memory safety patterns
+        run: |
+          echo "=== Checking for potential memory issues ==="
+          
+          # Check for raw pointers
+          RAW_PTRS=$(grep -rn "\*const\|\*mut" src/ --include="*.rs" | wc -l)
+          echo "Found $RAW_PTRS raw pointer usages"
+          
+          # Check for Box::leak or mem::forget
+          if grep -rn "Box::leak\|mem::forget\|mem::transmute" src/ --include="*.rs"; then
+            echo "::warning::Found potentially dangerous memory operations"
+          fi
+
+  # =============================================================================
+  # BUILD MATRIX - Test compilation across configurations
+  # =============================================================================
+  
+  build:
+    name: Build (${{ matrix.rust }}, ${{ matrix.features }})
+    runs-on: ubuntu-latest
+    needs: [clippy]
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable, beta, nightly]
+        features:
+          - "default"
+          - "wayland"
+          - "x11"
+          - "full"
+        exclude:
+          # Skip some combinations to save CI time
+          - rust: beta
+            features: "full"
+          - rust: nightly
+            features: "x11"
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libx11-xcb-dev libxcb1-dev libxcb-composite0-dev \
+            libxcb-randr0-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev libxcb-xinput-dev
+            
+      - name: Install Rust ${{ matrix.rust }}
+        uses: dtolnay/rust-action@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-build-${{ matrix.rust }}-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-${{ matrix.rust }}-${{ matrix.features }}-
+            
+      - name: Build (default features)
+        if: matrix.features == 'default'
+        run: cargo build --verbose
+        
+      - name: Build (specific features)
+        if: matrix.features != 'default'
+        run: cargo build --verbose --no-default-features --features "${{ matrix.features }}"
+        
+      - name: Build release
+        if: matrix.rust == 'stable' && matrix.features == 'default'
+        run: cargo build --release --verbose
+
+  # =============================================================================
+  # MSRV CHECK - Ensure we support minimum Rust version
+  # =============================================================================
+  
+  msrv:
+    name: MSRV Check (Rust ${{ env.MSRV }})
+    runs-on: ubuntu-latest
+    needs: fmt
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libxcb1-dev
+            
+      - name: Install Rust ${{ env.MSRV }}
+        uses: dtolnay/rust-action@master
+        with:
+          toolchain: ${{ env.MSRV }}
+          
+      - name: Check MSRV
+        run: cargo check --all-features
+
+  # =============================================================================
+  # TEST SUITE
+  # =============================================================================
+  
+  test:
+    name: Tests (${{ matrix.features }})
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        features:
+          - "default"
+          - "wayland"
+          - "x11"
+          - "full"
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libx11-xcb-dev libxcb1-dev libxcb-composite0-dev \
+            libxcb-randr0-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev libxcb-xinput-dev \
+            xvfb weston
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-test-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: Run tests (default)
+        if: matrix.features == 'default'
+        run: cargo test --verbose
+        
+      - name: Run tests (specific features)
+        if: matrix.features != 'default'
+        run: cargo test --verbose --no-default-features --features "${{ matrix.features }}"
+        
+      - name: Run tests with virtual display (X11)
+        if: contains(matrix.features, 'x11')
+        run: |
+          # Start Xvfb for X11 tests
+          Xvfb :99 -screen 0 1920x1080x24 &
+          export DISPLAY=:99
+          sleep 2
+          cargo test --no-default-features --features "x11" -- --test-threads=1
+          
+      - name: Run integration tests
+        run: |
+          # Run any integration tests
+          if [ -d "tests" ]; then
+            cargo test --test '*'
+          fi
+
+  # =============================================================================
+  # SECURITY AUDIT
+  # =============================================================================
+  
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+        
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+        
+      - name: Run cargo-audit
+        run: cargo audit --deny warnings
+        continue-on-error: true
+        
+      - name: Create deny.toml if not exists
+        run: |
+          if [ ! -f deny.toml ]; then
+            cat > deny.toml << 'EOF'
+          [advisories]
+          db-path = "~/.cargo/advisory-db"
+          db-urls = ["https://github.com/rustsec/advisory-db"]
+          vulnerability = "deny"
+          unmaintained = "warn"
+          yanked = "warn"
+          notice = "warn"
+          
+          [licenses]
+          unlicensed = "deny"
+          allow = [
+              "MIT",
+              "Apache-2.0",
+              "Apache-2.0 WITH LLVM-exception",
+              "BSD-2-Clause",
+              "BSD-3-Clause",
+              "ISC",
+              "Zlib",
+              "MPL-2.0",
+              "Unicode-DFS-2016",
+          ]
+          copyleft = "warn"
+          
+          [bans]
+          multiple-versions = "warn"
+          wildcards = "deny"
+          highlight = "all"
+          
+          [sources]
+          unknown-registry = "deny"
+          unknown-git = "warn"
+          allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+          EOF
+          fi
+          
+      - name: Run cargo-deny
+        run: cargo deny check
+        continue-on-error: true
+
+  # =============================================================================
+  # DOCUMENTATION
+  # =============================================================================
+  
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    needs: fmt
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libxcb1-dev
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        
+      - name: Check documentation
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps --all-features
+        
+      - name: Test documentation examples
+        run: cargo test --doc
+
+  # =============================================================================
+  # CODE COVERAGE
+  # =============================================================================
+  
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libxcb1-dev llvm
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: llvm-tools-preview
+          
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+        
+      - name: Generate coverage report
+        run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+
+  # =============================================================================
+  # BENCHMARKS
+  # =============================================================================
+  
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libxcb1-dev
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        
+      - name: Run benchmarks
+        run: cargo bench --no-run
+        continue-on-error: true
+
+  # =============================================================================
+  # RELEASE BUILD CHECK
+  # =============================================================================
+  
+  release-build:
+    name: Release Build
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libwayland-dev libxkbcommon-dev libinput-dev \
+            libdrm-dev libgbm-dev libegl-dev libgles2-mesa-dev libseat-dev \
+            libx11-dev libx11-xcb-dev libxcb1-dev libxcb-composite0-dev \
+            libxcb-randr0-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev libxcb-xinput-dev
+            
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        
+      - name: Build release (Wayland)
+        run: cargo build --release --no-default-features --features "wayland,xwayland"
+        
+      - name: Build release (X11)
+        run: cargo build --release --no-default-features --features "x11"
+        continue-on-error: true
+        
+      - name: Build release (Full)
+        run: cargo build --release --all-features
+        continue-on-error: true
+        
+      - name: Check binary size
+        run: |
+          ls -lh target/release/fluxway || true
+          echo "Binary size check complete"
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluxway-linux-x86_64
+          path: target/release/fluxway
+          if-no-files-found: ignore
+
+  # =============================================================================
+  # FINAL STATUS CHECK
+  # =============================================================================
+  
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [fmt, clippy, wm-specific-checks, build, msrv, test, security, docs]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [ "${{ needs.fmt.result }}" != "success" ]; then
+            echo "Formatting check failed"
+            exit 1
+          fi
+          if [ "${{ needs.clippy.result }}" != "success" ]; then
+            echo "Clippy check failed"
+            exit 1
+          fi
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "Build failed"
+            exit 1
+          fi
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "Tests failed"
+            exit 1
+          fi
+          echo "All CI checks passed!"

@@ -1,0 +1,121 @@
+# Clippy configuration for Fluxway Window Manager
+# https://doc.rust-lang.org/clippy/configuration.html
+
+# =============================================================================
+# General Settings
+# =============================================================================
+
+# Maximum cognitive complexity for functions
+cognitive-complexity-threshold = 30
+
+# Maximum number of lines in a function
+too-many-lines-threshold = 200
+
+# Maximum number of arguments for a function
+too-many-arguments-threshold = 10
+
+# Maximum number of struct fields
+max-struct-bools = 5
+
+# Disallow certain types in public interfaces
+disallowed-types = []
+
+# Disallow certain methods
+disallowed-methods = [
+    # Avoid panicking in window manager code
+    # "std::option::Option::unwrap",
+    # "std::result::Result::unwrap",
+    # "std::option::Option::expect",
+    # "std::result::Result::expect",
+]
+
+# Disallow certain macros
+disallowed-macros = [
+    # Don't allow panic! in release builds
+    # "std::panic",
+]
+
+# =============================================================================
+# Type Settings
+# =============================================================================
+
+# Types that are too trivial to pass by reference
+trivial-copy-size-limit = 16
+
+# Upper bound for the size of arrays that should be passed by value
+array-size-threshold = 512
+
+# =============================================================================
+# Documentation Settings
+# =============================================================================
+
+# Documentation is required for these items
+doc-valid-idents = [
+    "X11",
+    "X.Org",
+    "XWayland",
+    "Wayland",
+    "GPU",
+    "DRM",
+    "GBM",
+    "EGL",
+    "OpenGL",
+    "GLES",
+    "XKB",
+    "KMS",
+    "Fluxbox",
+    "i3",
+    "Sway",
+    "Smithay",
+    "IPC",
+    "UUID",
+    "TOML",
+    "JSON",
+    "UTF-8",
+    "UTF-16",
+    "RGB",
+    "RGBA",
+    "MSRV",
+    "CI",
+    "CD",
+]
+
+# =============================================================================
+# Performance Settings
+# =============================================================================
+
+# Minimum lines in a function to consider for inlining warnings
+single-char-binding-names-threshold = 4
+
+# Warn about large enum variants
+enum-variant-size-threshold = 200
+
+# Warn about large types on the stack
+large-error-threshold = 128
+
+# Warn about large futures
+future-size-threshold = 16384
+
+# =============================================================================
+# Style Settings
+# =============================================================================
+
+# Enforced prefix for unsafe functions
+# standard-macro-braces = []
+
+# Allowed wildcard imports
+allowed-wildcard-imports = []
+
+# Minimum number of match arms to use ranges
+# matches-for-let-else = "WellKnown"
+
+# =============================================================================
+# Window Manager Specific
+# =============================================================================
+
+# Allow certain patterns common in window managers
+# - Large match statements for event handling
+# - Multiple boolean fields for window state
+# - Similar names for related concepts (window/workspace)
+
+# These are set in Cargo.toml [lints.clippy] section

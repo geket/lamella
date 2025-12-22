@@ -1,0 +1,15 @@
+# Rust toolchain configuration for Fluxway
+# This ensures consistent builds across all development environments
+
+[toolchain]
+channel = "stable"
+components = [
+    "rustfmt",
+    "clippy",
+    "rust-src",
+    "rust-analyzer",
+]
+targets = [
+    "x86_64-unknown-linux-gnu",
+]
+profile = "default"
