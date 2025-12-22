@@ -1,7 +1,7 @@
 # Rustfmt configuration for Fluxway
 # https://rust-lang.github.io/rustfmt/
+# Note: Only stable options are included for compatibility with stable Rust
 
-# Stable options
 edition = "2021"
 max_width = 100
 hard_tabs = false
@@ -10,44 +10,12 @@ newline_style = "Unix"
 use_small_heuristics = "Default"
 
 # Imports
-imports_granularity = "Module"
-group_imports = "StdExternalCrate"
 reorder_imports = true
 reorder_modules = true
-
-# Comments
-wrap_comments = false
-format_code_in_doc_comments = true
-doc_comment_code_block_width = 80
-normalize_comments = false
-normalize_doc_attributes = true
-
-# Strings
-format_strings = false
-
-# Macros
-format_macro_matchers = true
-format_macro_bodies = true
-
-# Control flow
-match_block_trailing_comma = true
 
 # Misc
 use_field_init_shorthand = true
 use_try_shorthand = true
-force_multiline_blocks = false
-fn_single_line = false
-where_single_line = false
-trailing_semicolon = true
-trailing_comma = "Vertical"
-binop_separator = "Front"
-type_punctuation_density = "Wide"
-space_before_colon = false
-space_after_colon = true
-spaces_around_ranges = false
-match_arm_blocks = true
+match_block_trailing_comma = true
 match_arm_leading_pipes = "Never"
 force_explicit_abi = true
-condense_wildcard_suffixes = false
-enum_discrim_align_threshold = 0
-struct_field_align_threshold = 0

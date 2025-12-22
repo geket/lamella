@@ -6,7 +6,7 @@
 
 **A Bridge Between Worlds**
 
-[![CI](https://github.com/fluxway-wm/fluxway/actions/workflows/ci.yml/badge.svg)](https://github.com/fluxway-wm/fluxway/actions/workflows/ci.yml)
+[![CI](https://github.com/geket/lamella/actions/workflows/ci.yml/badge.svg)](https://github.com/geket/lamella/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![Wayland](https://img.shields.io/badge/Wayland-ready-green.svg)](https://wayland.freedesktop.org/)
@@ -263,7 +263,7 @@ sudo pacman -S \
 
 ```bash
 # Clone the repository
-git clone https://github.com/fluxway-wm/fluxway.git
+git clone https://github.com/geket/lamella.git
 cd fluxway
 
 # Build with default features (Wayland + XWayland)
@@ -627,7 +627,7 @@ Fluxway welcomes contributions! Whether you're fixing bugs, adding features, or 
 
 ```bash
 # Clone and build
-git clone https://github.com/fluxway-wm/fluxway.git
+git clone https://github.com/geket/lamella.git
 cd fluxway
 cargo build
 
@@ -708,6 +708,6 @@ Fluxway is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 **Fluxway** — *Bridging the gap, one window at a time.*
 
-[Report Bug](https://github.com/fluxway-wm/fluxway/issues) • [Request Feature](https://github.com/fluxway-wm/fluxway/issues) • [Discussions](https://github.com/fluxway-wm/fluxway/discussions)
+[Report Bug](https://github.com/geket/lamella/issues) • [Request Feature](https://github.com/geket/lamella/issues) • [Discussions](https://github.com/geket/lamella/discussions)
 
 </div>

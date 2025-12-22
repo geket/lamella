@@ -36,7 +36,7 @@ This project follows the [Rust Code of Conduct](https://www.rust-lang.org/polici
 
 3. **Fork and clone**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/fluxway.git
+   git clone https://github.com/YOUR_USERNAME/lamella.git
    cd fluxway
    ```
 
