@@ -113,7 +113,7 @@ impl IpcMessage {
     pub fn to_bytes(&self) -> Vec<u8> {
         let payload_bytes = self.payload.as_bytes();
         let mut bytes = Vec::with_capacity(14 + payload_bytes.len());
-        
+
         // Magic
         bytes.extend_from_slice(IPC_MAGIC);
         // Length (little-endian)
@@ -122,7 +122,7 @@ impl IpcMessage {
         bytes.extend_from_slice(&(self.message_type as u32).to_le_bytes());
         // Payload
         bytes.extend_from_slice(payload_bytes);
-        
+
         bytes
     }
 
@@ -130,36 +130,42 @@ impl IpcMessage {
     pub fn from_reader(reader: &mut impl Read) -> Result<Self> {
         // Read magic
         let mut magic = [0u8; 6];
-        reader.read_exact(&mut magic)
+        reader
+            .read_exact(&mut magic)
             .context("Failed to read IPC magic")?;
-        
+
         if &magic != IPC_MAGIC {
             anyhow::bail!("Invalid IPC magic: {:?}", magic);
         }
 
         // Read length
         let mut length_bytes = [0u8; 4];
-        reader.read_exact(&mut length_bytes)
+        reader
+            .read_exact(&mut length_bytes)
             .context("Failed to read message length")?;
         let length = u32::from_le_bytes(length_bytes) as usize;
 
         // Read type
         let mut type_bytes = [0u8; 4];
-        reader.read_exact(&mut type_bytes)
+        reader
+            .read_exact(&mut type_bytes)
             .context("Failed to read message type")?;
         let msg_type = u32::from_le_bytes(type_bytes);
-        
+
         let message_type = MessageType::from_u32(msg_type)
             .ok_or_else(|| anyhow::anyhow!("Unknown message type: {}", msg_type))?;
 
         // Read payload
         let mut payload_bytes = vec![0u8; length];
-        reader.read_exact(&mut payload_bytes)
+        reader
+            .read_exact(&mut payload_bytes)
             .context("Failed to read payload")?;
-        let payload = String::from_utf8(payload_bytes)
-            .context("Invalid UTF-8 in payload")?;
+        let payload = String::from_utf8(payload_bytes).context("Invalid UTF-8 in payload")?;
 
-        Ok(Self { message_type, payload })
+        Ok(Self {
+            message_type,
+            payload,
+        })
     }
 }
 
@@ -278,7 +284,7 @@ pub enum IpcEvent {
     #[serde(rename = "empty")]
     WorkspaceEmpty { current: WorkspaceInfo },
     #[serde(rename = "focus")]
-    WorkspaceFocus { 
+    WorkspaceFocus {
         current: WorkspaceInfo,
         old: Option<WorkspaceInfo>,
     },
@@ -321,7 +327,7 @@ pub enum IpcEvent {
 
     // Binding event
     #[serde(rename = "run")]
-    Binding { 
+    Binding {
         command: String,
         event_state_mask: Vec<String>,
         input_code: u32,
@@ -370,7 +376,9 @@ pub struct IpcServer {
 
 impl IpcServer {
     /// Create a new IPC server
-    pub fn new(socket_path: impl AsRef<Path>) -> Result<(Self, Receiver<IpcRequest>, Receiver<(EventType, Value)>)> {
+    pub fn new(
+        socket_path: impl AsRef<Path>,
+    ) -> Result<(Self, Receiver<IpcRequest>, Receiver<(EventType, Value)>)> {
         let socket_path = socket_path.as_ref().to_path_buf();
         let (request_sender, request_receiver) = mpsc::channel();
         let (event_sender, event_receiver) = mpsc::channel();
@@ -410,10 +418,10 @@ impl IpcServer {
                                 debug!("IPC client disconnected: {}", e);
                             }
                         });
-                    }
+                    },
                     Err(e) => {
                         error!("Failed to accept IPC connection: {}", e);
-                    }
+                    },
                 }
             }
         });
@@ -490,7 +498,11 @@ impl IpcHandler {
             human_readable: format!("fluxway {}", env!("CARGO_PKG_VERSION")),
             loaded_config_file_name: String::new(),
         };
-        Self::respond_json(request, MessageType::GetVersion, &serde_json::to_value(version).unwrap());
+        Self::respond_json(
+            request,
+            MessageType::GetVersion,
+            &serde_json::to_value(version).unwrap(),
+        );
     }
 
     /// Handle get_binding_modes request
@@ -506,9 +518,9 @@ impl IpcHandler {
     /// Handle subscribe request
     pub fn handle_subscribe(request: &IpcRequest, events: &[EventType]) -> Vec<EventType> {
         // Parse requested events from payload
-        let requested: Vec<String> = serde_json::from_str(&request.message.payload)
-            .unwrap_or_default();
-        
+        let requested: Vec<String> =
+            serde_json::from_str(&request.message.payload).unwrap_or_default();
+
         let mut subscribed = Vec::new();
         for event_name in requested {
             if let Ok(event_type) = serde_json::from_value::<EventType>(json!(event_name)) {
@@ -518,7 +530,7 @@ impl IpcHandler {
 
         let result = json!({ "success": true });
         Self::respond_json(request, MessageType::Subscribe, &result);
-        
+
         subscribed
     }
 }
@@ -538,71 +550,71 @@ impl IpcClient2 {
     /// Send a command and get response
     pub fn send_command(&self, command: &str) -> Result<Vec<CommandResult>> {
         let mut stream = UnixStream::connect(&self.socket_path)?;
-        
+
         let message = IpcMessage::new(MessageType::RunCommand, command);
         stream.write_all(&message.to_bytes())?;
-        
+
         let response = IpcMessage::from_reader(&mut stream)?;
         let results: Vec<CommandResult> = serde_json::from_str(&response.payload)?;
-        
+
         Ok(results)
     }
 
     /// Get workspaces
     pub fn get_workspaces(&self) -> Result<Vec<WorkspaceInfo>> {
         let mut stream = UnixStream::connect(&self.socket_path)?;
-        
+
         let message = IpcMessage::new(MessageType::GetWorkspaces, "");
         stream.write_all(&message.to_bytes())?;
-        
+
         let response = IpcMessage::from_reader(&mut stream)?;
         let workspaces: Vec<WorkspaceInfo> = serde_json::from_str(&response.payload)?;
-        
+
         Ok(workspaces)
     }
 
     /// Get tree
     pub fn get_tree(&self) -> Result<TreeNode> {
         let mut stream = UnixStream::connect(&self.socket_path)?;
-        
+
         let message = IpcMessage::new(MessageType::GetTree, "");
         stream.write_all(&message.to_bytes())?;
-        
+
         let response = IpcMessage::from_reader(&mut stream)?;
         let tree: TreeNode = serde_json::from_str(&response.payload)?;
-        
+
         Ok(tree)
     }
 
     /// Get version
     pub fn get_version(&self) -> Result<VersionInfo> {
         let mut stream = UnixStream::connect(&self.socket_path)?;
-        
+
         let message = IpcMessage::new(MessageType::GetVersion, "");
         stream.write_all(&message.to_bytes())?;
-        
+
         let response = IpcMessage::from_reader(&mut stream)?;
         let version: VersionInfo = serde_json::from_str(&response.payload)?;
-        
+
         Ok(version)
     }
 
     /// Subscribe to events
     pub fn subscribe(&self, events: &[EventType]) -> Result<UnixStream> {
         let mut stream = UnixStream::connect(&self.socket_path)?;
-        
+
         let events_json = serde_json::to_string(events)?;
         let message = IpcMessage::new(MessageType::Subscribe, events_json);
         stream.write_all(&message.to_bytes())?;
-        
+
         // Read subscription confirmation
         let response = IpcMessage::from_reader(&mut stream)?;
         let result: Value = serde_json::from_str(&response.payload)?;
-        
+
         if result.get("success").and_then(|v| v.as_bool()) != Some(true) {
             anyhow::bail!("Subscription failed");
         }
-        
+
         Ok(stream)
     }
 }
@@ -615,7 +627,7 @@ mod tests {
     fn test_ipc_message_serialization() {
         let message = IpcMessage::new(MessageType::RunCommand, "kill");
         let bytes = message.to_bytes();
-        
+
         assert_eq!(&bytes[0..6], IPC_MAGIC);
         assert_eq!(u32::from_le_bytes(bytes[6..10].try_into().unwrap()), 4); // "kill" length
         assert_eq!(u32::from_le_bytes(bytes[10..14].try_into().unwrap()), 0); // RunCommand
@@ -625,7 +637,7 @@ mod tests {
     fn test_command_result() {
         let success = CommandResult::success();
         assert!(success.success);
-        
+
         let error = CommandResult::error("test error");
         assert!(!error.success);
         assert_eq!(error.error.as_deref(), Some("test error"));

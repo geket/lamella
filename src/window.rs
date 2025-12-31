@@ -149,61 +149,61 @@ impl SizeHints {
 pub struct Window {
     /// Unique identifier
     pub id: WindowId,
-    
+
     /// Window title
     pub title: String,
-    
+
     /// Application ID (app_id in Wayland, WM_CLASS in X11)
     pub app_id: String,
-    
+
     /// Window class (WM_CLASS instance)
     pub class: String,
-    
+
     /// Current geometry
     pub geometry: Geometry,
-    
+
     /// Geometry before fullscreen/maximize
     pub saved_geometry: Option<Geometry>,
-    
+
     /// Window state flags
     pub state: WindowState,
-    
+
     /// Window type
     pub window_type: WindowType,
-    
+
     /// Decoration mode
     pub decoration: DecorationMode,
-    
+
     /// Border style
     pub border: BorderStyle,
-    
+
     /// Size hints from the client
     pub size_hints: SizeHints,
-    
+
     /// Workspace this window belongs to
     pub workspace: Option<WorkspaceId>,
-    
+
     /// PID of the owning process
     pub pid: Option<u32>,
-    
+
     /// User-assigned marks (like vim marks)
     pub marks: Vec<String>,
-    
+
     /// Parent window (for transients/dialogs)
     pub parent: Option<WindowId>,
-    
+
     /// Child windows
     pub children: Vec<WindowId>,
-    
+
     /// Is this an XWayland window?
     pub is_xwayland: bool,
-    
+
     /// Opacity (0.0 - 1.0)
     pub opacity: f32,
-    
+
     /// Initial/requested position (for floating)
     pub requested_position: Option<(i32, i32)>,
-    
+
     /// Initial/requested size (for floating)
     pub requested_size: Option<(u32, u32)>,
 }
@@ -247,7 +247,7 @@ impl Window {
                 | WindowType::Tooltip
                 | WindowType::Notification
         ) || self.parent.is_some()
-          || self.state.contains(WindowState::MODAL)
+            || self.state.contains(WindowState::MODAL)
     }
 
     /// Toggle floating state
@@ -306,8 +306,7 @@ impl Window {
 
     /// Check if window is tiled (not floating)
     pub fn is_tiled(&self) -> bool {
-        !self.state.contains(WindowState::FLOATING)
-            && !self.state.contains(WindowState::FULLSCREEN)
+        !self.state.contains(WindowState::FLOATING) && !self.state.contains(WindowState::FULLSCREEN)
     }
 
     /// Check if window is focused
@@ -317,7 +316,9 @@ impl Window {
 
     /// Apply size hints to geometry
     pub fn apply_size_hints(&mut self) {
-        let (w, h) = self.size_hints.constrain(self.geometry.width, self.geometry.height);
+        let (w, h) = self
+            .size_hints
+            .constrain(self.geometry.width, self.geometry.height);
         self.geometry.width = w;
         self.geometry.height = h;
     }
@@ -476,10 +477,10 @@ mod tests {
     fn test_window_state_flags() {
         let mut window = Window::new("test".into(), "Test Window".into());
         assert!(!window.is_focused());
-        
+
         window.state.insert(WindowState::FOCUSED);
         assert!(window.is_focused());
-        
+
         window.state.insert(WindowState::FLOATING);
         assert!(!window.is_tiled());
     }
@@ -502,10 +503,10 @@ mod tests {
     #[test]
     fn test_window_criteria() {
         let window = Window::new("firefox".into(), "Mozilla Firefox".into());
-        
+
         let criteria = WindowCriteria::new().app_id("firefox");
         assert!(criteria.matches(&window));
-        
+
         let criteria = WindowCriteria::new().app_id("chrome");
         assert!(!criteria.matches(&window));
     }

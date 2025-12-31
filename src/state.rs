@@ -32,7 +32,12 @@ pub struct Geometry {
 
 impl Geometry {
     pub fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
-        Self { x, y, width, height }
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 
     pub fn contains(&self, x: i32, y: i32) -> bool {
@@ -66,7 +71,12 @@ impl Geometry {
         let bottom_height = self.height - top_height;
 
         let top = Geometry::new(self.x, self.y, self.width, top_height);
-        let bottom = Geometry::new(self.x, self.y + top_height as i32, self.width, bottom_height);
+        let bottom = Geometry::new(
+            self.x,
+            self.y + top_height as i32,
+            self.width,
+            bottom_height,
+        );
 
         (top, bottom)
     }
@@ -137,37 +147,37 @@ impl FocusState {
 pub struct State {
     /// Configuration
     pub config: Config,
-    
+
     /// All managed windows
     pub windows: HashMap<WindowId, Window>,
-    
+
     /// All workspaces
     pub workspaces: IndexMap<WorkspaceId, Workspace>,
-    
+
     /// All outputs (monitors)
     pub outputs: IndexMap<u64, Output>,
-    
+
     /// All containers in the layout tree
     pub containers: HashMap<ContainerId, Container>,
-    
+
     /// Focus tracking
     pub focus: FocusState,
-    
+
     /// Scratchpad windows (hidden floating windows)
     pub scratchpad: Vec<WindowId>,
-    
+
     /// Marks (named references to windows, like vim marks)
     pub marks: HashMap<String, WindowId>,
-    
+
     /// Running flag
     pub running: bool,
-    
+
     /// Pending layout recalculation
     pub layout_dirty: bool,
-    
+
     /// Current pointer position
     pub pointer_position: (f64, f64),
-    
+
     /// Currently grabbed window (for move/resize)
     pub grabbed_window: Option<GrabbedWindow>,
 }
@@ -229,7 +239,9 @@ impl State {
         let id = window.id;
 
         // Determine which workspace to add to
-        let workspace_id = self.focus.focused_workspace
+        let workspace_id = self
+            .focus
+            .focused_workspace
             .or_else(|| self.workspaces.keys().next().copied())
             .expect("No workspaces available");
 
@@ -307,22 +319,30 @@ impl State {
 
     /// Get the focused window
     pub fn focused_window(&self) -> Option<&Window> {
-        self.focus.focused_window.and_then(|id| self.windows.get(&id))
+        self.focus
+            .focused_window
+            .and_then(|id| self.windows.get(&id))
     }
 
     /// Get the focused window mutably
     pub fn focused_window_mut(&mut self) -> Option<&mut Window> {
-        self.focus.focused_window.and_then(|id| self.windows.get_mut(&id))
+        self.focus
+            .focused_window
+            .and_then(|id| self.windows.get_mut(&id))
     }
 
     /// Get the focused workspace
     pub fn focused_workspace(&self) -> Option<&Workspace> {
-        self.focus.focused_workspace.and_then(|id| self.workspaces.get(&id))
+        self.focus
+            .focused_workspace
+            .and_then(|id| self.workspaces.get(&id))
     }
 
     /// Get the focused workspace mutably
     pub fn focused_workspace_mut(&mut self) -> Option<&mut Workspace> {
-        self.focus.focused_workspace.and_then(|id| self.workspaces.get_mut(&id))
+        self.focus
+            .focused_workspace
+            .and_then(|id| self.workspaces.get_mut(&id))
     }
 
     /// Switch to a workspace
@@ -417,8 +437,8 @@ impl State {
             // Check floating windows first (they're on top)
             for &window_id in workspace.floating_windows.iter().rev() {
                 if let Some(window) = self.windows.get(&window_id) {
-                    if !window.state.contains(WindowState::HIDDEN) 
-                        && window.geometry.contains(x as i32, y as i32) 
+                    if !window.state.contains(WindowState::HIDDEN)
+                        && window.geometry.contains(x as i32, y as i32)
                     {
                         return Some(window_id);
                     }
@@ -442,9 +462,9 @@ impl State {
 
     /// Get output at position
     pub fn output_at(&self, x: f64, y: f64) -> Option<&Output> {
-        self.outputs.values().find(|output| {
-            output.geometry.contains(x as i32, y as i32)
-        })
+        self.outputs
+            .values()
+            .find(|output| output.geometry.contains(x as i32, y as i32))
     }
 
     /// Mark layout as needing recalculation

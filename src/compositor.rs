@@ -12,11 +12,11 @@ use tracing::{debug, error, info, warn};
 
 use crate::config::{Config, FocusFollowsMouse};
 use crate::input::{
-    Command, FocusTarget, InputManager, LayoutCmd, Modifiers, MoveTarget,
-    ResizeDirection, SplitCmd, Toggle, WorkspaceTarget,
+    Command, FocusTarget, InputManager, LayoutCmd, Modifiers, MoveTarget, ResizeDirection,
+    SplitCmd, Toggle, WorkspaceTarget,
 };
 use crate::layout::{LayoutMode, SplitDirection};
-use crate::state::{GrabOperation, Geometry, ResizeEdges, State};
+use crate::state::{Geometry, GrabOperation, ResizeEdges, State};
 use crate::window::{WindowId, WindowState};
 
 /// Main compositor struct - contains all window management state
@@ -119,84 +119,84 @@ impl Fluxway {
         match command {
             Command::Exec(cmd) | Command::ExecAlways(cmd) => {
                 self.spawn_command(&cmd);
-            }
+            },
             Command::Kill => {
                 if let Some(window_id) = self.state.focus.focused_window {
                     self.state.remove_window(window_id);
                 }
-            }
+            },
             Command::Focus(target) => {
                 self.handle_focus(target);
-            }
+            },
             Command::Move(target) => {
                 self.handle_move(target);
-            }
+            },
             Command::Floating(toggle) => {
                 self.handle_floating(toggle);
-            }
+            },
             Command::Fullscreen(toggle) => {
                 self.handle_fullscreen(toggle);
-            }
+            },
             Command::Sticky(toggle) => {
                 self.handle_sticky(toggle);
-            }
+            },
             Command::Split(cmd) => {
                 self.handle_split(cmd);
-            }
+            },
             Command::Layout(cmd) => {
                 self.handle_layout(cmd);
-            }
+            },
             Command::Workspace(target) => {
                 self.switch_workspace(target);
-            }
+            },
             Command::MoveToWorkspace(target) => {
                 self.move_to_workspace(target);
-            }
+            },
             Command::ScratchpadShow => {
                 self.toggle_scratchpad();
-            }
+            },
             Command::MoveToScratchpad => {
                 if let Some(window_id) = self.state.focus.focused_window {
                     self.state.toggle_scratchpad(window_id);
                 }
-            }
+            },
             Command::Mark(mark) => {
                 if let Some(window_id) = self.state.focus.focused_window {
                     self.state.set_mark(mark, window_id);
                 }
-            }
+            },
             Command::GotoMark(mark) => {
                 self.state.goto_mark(&mark);
-            }
+            },
             Command::Unmark(mark) => {
                 // TODO: implement unmark
                 debug!("Unmark: {:?}", mark);
-            }
+            },
             Command::Reload => {
                 self.reload_config();
-            }
+            },
             Command::Restart => {
                 info!("Restart requested");
                 // TODO: implement restart
-            }
+            },
             Command::Exit => {
                 self.should_exit = true;
-            }
+            },
             Command::Mode(mode_name) => {
                 self.input_manager.set_mode(&mode_name);
-            }
+            },
             Command::Resize(direction, amount) => {
                 self.handle_resize(direction, amount);
-            }
+            },
             Command::Gaps(gap_cmd) => {
                 debug!("Gaps command: {:?}", gap_cmd);
-            }
+            },
             Command::Bar(bar_cmd) => {
                 debug!("Bar command: {:?}", bar_cmd);
-            }
+            },
             Command::Unknown(cmd) => {
                 warn!("Unknown command: {}", cmd);
-            }
+            },
         }
     }
 
@@ -215,22 +215,22 @@ impl Fluxway {
         match target {
             FocusTarget::Left | FocusTarget::Right | FocusTarget::Up | FocusTarget::Down => {
                 // Navigate in direction
-            }
+            },
             FocusTarget::Parent => {
                 // Focus parent container
-            }
+            },
             FocusTarget::Child => {
                 // Focus child
-            }
+            },
             FocusTarget::ModeToggle => {
                 // Toggle focus mode (floating/tiling)
-            }
+            },
             FocusTarget::Output(name) => {
                 debug!("Focus output: {}", name);
-            }
+            },
             FocusTarget::Workspace => {
                 // Focus workspace
-            }
+            },
         }
     }
 
@@ -284,7 +284,7 @@ impl Fluxway {
                         } else {
                             window.state.insert(WindowState::STICKY);
                         }
-                    }
+                    },
                 }
             }
         }
@@ -321,29 +321,37 @@ impl Fluxway {
                 } else {
                     keys.first().cloned()
                 }
-            }
+            },
             WorkspaceTarget::Prev | WorkspaceTarget::PrevOnOutput => {
                 let keys: Vec<_> = self.state.workspaces.keys().cloned().collect();
                 if let Some(current) = self.state.focus.focused_workspace {
                     let idx = keys.iter().position(|&id| id == current).unwrap_or(0);
-                    let new_idx = if idx == 0 { keys.len().saturating_sub(1) } else { idx - 1 };
+                    let new_idx = if idx == 0 {
+                        keys.len().saturating_sub(1)
+                    } else {
+                        idx - 1
+                    };
                     keys.get(new_idx).cloned()
                 } else {
                     keys.last().cloned()
                 }
-            }
-            WorkspaceTarget::Number(num) => {
-                self.state.workspaces.keys().nth((num as usize).saturating_sub(1)).cloned()
-            }
-            WorkspaceTarget::Name(ref name) => {
-                self.state.workspaces.iter()
-                    .find(|(_, ws)| ws.name == *name)
-                    .map(|(id, _)| *id)
-            }
+            },
+            WorkspaceTarget::Number(num) => self
+                .state
+                .workspaces
+                .keys()
+                .nth((num as usize).saturating_sub(1))
+                .cloned(),
+            WorkspaceTarget::Name(ref name) => self
+                .state
+                .workspaces
+                .iter()
+                .find(|(_, ws)| ws.name == *name)
+                .map(|(id, _)| *id),
             WorkspaceTarget::BackAndForth => {
                 // TODO: implement back and forth
                 None
-            }
+            },
         };
 
         if let Some(id) = workspace_id {
@@ -354,17 +362,23 @@ impl Fluxway {
 
     /// Move focused window to workspace
     pub fn move_to_workspace(&mut self, target: WorkspaceTarget) {
-        let Some(window_id) = self.state.focus.focused_window else { return };
-        
+        let Some(window_id) = self.state.focus.focused_window else {
+            return;
+        };
+
         let workspace_id = match target {
-            WorkspaceTarget::Number(num) => {
-                self.state.workspaces.keys().nth((num as usize).saturating_sub(1)).cloned()
-            }
-            WorkspaceTarget::Name(ref name) => {
-                self.state.workspaces.iter()
-                    .find(|(_, ws)| ws.name == *name)
-                    .map(|(id, _)| *id)
-            }
+            WorkspaceTarget::Number(num) => self
+                .state
+                .workspaces
+                .keys()
+                .nth((num as usize).saturating_sub(1))
+                .cloned(),
+            WorkspaceTarget::Name(ref name) => self
+                .state
+                .workspaces
+                .iter()
+                .find(|(_, ws)| ws.name == *name)
+                .map(|(id, _)| *id),
             _ => None,
         };
 
@@ -395,10 +409,10 @@ impl Fluxway {
                 self.input_manager.load_bindings(&config.bindings);
                 self.state.config = config;
                 info!("Configuration reloaded successfully");
-            }
+            },
             Err(e) => {
                 error!("Failed to reload configuration: {}", e);
-            }
+            },
         }
     }
 
@@ -459,25 +473,29 @@ impl Fluxway {
                     GrabOperation::Move => {
                         window.geometry.x = initial.x + dx as i32;
                         window.geometry.y = initial.y + dy as i32;
-                    }
+                    },
                     GrabOperation::Resize => {
                         if edges.contains(ResizeEdges::RIGHT) {
-                            window.geometry.width = (initial.width as i32 + dx as i32).max(100) as u32;
+                            window.geometry.width =
+                                (initial.width as i32 + dx as i32).max(100) as u32;
                         }
                         if edges.contains(ResizeEdges::BOTTOM) {
-                            window.geometry.height = (initial.height as i32 + dy as i32).max(100) as u32;
+                            window.geometry.height =
+                                (initial.height as i32 + dy as i32).max(100) as u32;
                         }
                         if edges.contains(ResizeEdges::LEFT) {
                             let new_width = (initial.width as i32 - dx as i32).max(100) as u32;
-                            window.geometry.x = initial.x + (initial.width as i32 - new_width as i32);
+                            window.geometry.x =
+                                initial.x + (initial.width as i32 - new_width as i32);
                             window.geometry.width = new_width;
                         }
                         if edges.contains(ResizeEdges::TOP) {
                             let new_height = (initial.height as i32 - dy as i32).max(100) as u32;
-                            window.geometry.y = initial.y + (initial.height as i32 - new_height as i32);
+                            window.geometry.y =
+                                initial.y + (initial.height as i32 - new_height as i32);
                             window.geometry.height = new_height;
                         }
-                    }
+                    },
                 }
             }
         }
@@ -578,8 +596,14 @@ pub fn run_winit(config: Config) -> Result<()> {
     // In a real implementation, this would enter the event loop
     // For now, just show configuration summary
     info!("Configuration summary:");
-    info!("  - Focus follows mouse: {:?}", config.general.focus_follows_mouse);
-    info!("  - Floating modifier: {}", config.general.floating_modifier);
+    info!(
+        "  - Focus follows mouse: {:?}",
+        config.general.focus_follows_mouse
+    );
+    info!(
+        "  - Floating modifier: {}",
+        config.general.floating_modifier
+    );
     info!("  - Inner gap: {}", config.gaps.inner);
     info!("  - Outer gap: {}", config.gaps.outer);
     info!("  - Border width: {}", config.border.width);
@@ -609,15 +633,21 @@ mod tests {
     #[test]
     fn test_resize_edge_to_edges() {
         assert_eq!(ResizeEdge::Top.to_edges(), ResizeEdges::TOP);
-        assert_eq!(ResizeEdge::TopLeft.to_edges(), ResizeEdges::TOP | ResizeEdges::LEFT);
-        assert_eq!(ResizeEdge::BottomRight.to_edges(), ResizeEdges::BOTTOM | ResizeEdges::RIGHT);
+        assert_eq!(
+            ResizeEdge::TopLeft.to_edges(),
+            ResizeEdges::TOP | ResizeEdges::LEFT
+        );
+        assert_eq!(
+            ResizeEdge::BottomRight.to_edges(),
+            ResizeEdges::BOTTOM | ResizeEdges::RIGHT
+        );
     }
 
     #[test]
     fn test_compositor_new() {
         let config = Config::default();
         let compositor = Fluxway::new(config);
-        
+
         assert!(!compositor.should_exit);
         assert_eq!(compositor.frame_count, 0);
         assert!(compositor.scratchpad_visible.is_empty());

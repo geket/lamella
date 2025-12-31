@@ -21,49 +21,49 @@ use crate::window::{BorderStyle, DecorationMode, WindowCriteria};
 pub struct Config {
     /// General settings
     pub general: GeneralConfig,
-    
+
     /// Gap settings (inner and outer)
     pub gaps: GapConfig,
-    
+
     /// Border settings
     pub border: BorderConfig,
-    
+
     /// Color scheme
     pub colors: ColorConfig,
-    
+
     /// Font configuration
     pub font: FontConfig,
-    
+
     /// Input device configuration
     pub input: InputConfig,
-    
+
     /// Output (monitor) configuration
     #[serde(default)]
     pub outputs: Vec<OutputConfig>,
-    
+
     /// Workspace configuration
     #[serde(default)]
     pub workspaces: Vec<WorkspaceConfigEntry>,
-    
+
     /// Key bindings
     #[serde(default)]
     pub bindings: Vec<BindingConfig>,
-    
+
     /// Mouse bindings
     #[serde(default)]
     pub mouse_bindings: Vec<MouseBindingConfig>,
-    
+
     /// Window rules
     #[serde(default)]
     pub rules: Vec<WindowRule>,
-    
+
     /// Startup commands
     #[serde(default)]
     pub startup: Vec<StartupCommand>,
-    
+
     /// Bar configuration
     pub bar: BarConfig,
-    
+
     /// Animation settings
     pub animations: AnimationConfig,
 }
@@ -92,29 +92,27 @@ impl Default for Config {
 impl Config {
     /// Load configuration from file
     pub fn load(path: Option<&str>) -> Result<Self> {
-        let config_path = path
-            .map(PathBuf::from)
-            .or_else(Self::find_config_file);
+        let config_path = path.map(PathBuf::from).or_else(Self::find_config_file);
 
         match config_path {
             Some(path) if path.exists() => {
                 info!("Loading configuration from {:?}", path);
                 let content = fs::read_to_string(&path)
                     .with_context(|| format!("Failed to read config file: {:?}", path))?;
-                
+
                 let config: Config = toml::from_str(&content)
                     .with_context(|| format!("Failed to parse config file: {:?}", path))?;
-                
+
                 Ok(config)
-            }
+            },
             Some(path) => {
                 warn!("Config file not found at {:?}, using defaults", path);
                 Ok(Self::default())
-            }
+            },
             None => {
                 info!("No config file found, using defaults");
                 Ok(Self::default())
-            }
+            },
         }
     }
 
@@ -132,15 +130,14 @@ impl Config {
             Some(PathBuf::from("/etc/fluxway/config.toml")),
         ];
 
-        candidates.into_iter()
-            .flatten()
-            .find(|p| p.exists())
+        candidates.into_iter().flatten().find(|p| p.exists())
     }
 
     /// Generate default configuration as a string
     pub fn default_config_string() -> String {
         let config = Self::default();
-        toml::to_string_pretty(&config).unwrap_or_else(|_| String::from("# Error generating config"))
+        toml::to_string_pretty(&config)
+            .unwrap_or_else(|_| String::from("# Error generating config"))
     }
 
     /// Get the socket path
@@ -148,8 +145,8 @@ impl Config {
         if let Some(ref path) = self.general.socket_path {
             PathBuf::from(path)
         } else {
-            let runtime_dir = std::env::var("XDG_RUNTIME_DIR")
-                .unwrap_or_else(|_| "/tmp".to_string());
+            let runtime_dir =
+                std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".to_string());
             PathBuf::from(runtime_dir).join("fluxway.sock")
         }
     }

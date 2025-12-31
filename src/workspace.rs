@@ -34,40 +34,40 @@ pub struct WorkspaceConfig {
 pub struct Workspace {
     /// Unique identifier
     pub id: WorkspaceId,
-    
+
     /// Workspace name (can be number or string)
     pub name: String,
-    
+
     /// Display number (for numbered workspaces)
     pub number: Option<u32>,
-    
+
     /// Output this workspace is on
     pub output: Option<String>,
-    
+
     /// Layout tree for tiled windows
     pub layout: LayoutTree,
-    
+
     /// Tiled windows in order
     pub tiled_windows: Vec<WindowId>,
-    
+
     /// Floating windows in stacking order
     pub floating_windows: Vec<WindowId>,
-    
+
     /// Fullscreen window (if any)
     pub fullscreen_window: Option<WindowId>,
-    
+
     /// Focus history for this workspace
     pub focus_stack: Vec<WindowId>,
-    
+
     /// Is this workspace visible?
     pub visible: bool,
-    
+
     /// Is this workspace urgent?
     pub urgent: bool,
-    
+
     /// Workspace geometry (from output)
     pub geometry: Geometry,
-    
+
     /// Available work area (excluding panels, etc.)
     pub work_area: Geometry,
 }
@@ -76,7 +76,7 @@ impl Workspace {
     /// Create a new workspace
     pub fn new(name: String) -> Self {
         let number = name.parse::<u32>().ok();
-        
+
         Self {
             id: Uuid::new_v4(),
             name,
@@ -121,13 +121,13 @@ impl Workspace {
         // Remove from tiled
         self.tiled_windows.retain(|&id| id != window_id);
         self.layout.remove_window(window_id);
-        
+
         // Remove from floating
         self.floating_windows.retain(|&id| id != window_id);
-        
+
         // Remove from focus stack
         self.focus_stack.retain(|&id| id != window_id);
-        
+
         // Clear fullscreen if needed
         if self.fullscreen_window == Some(window_id) {
             self.fullscreen_window = None;
@@ -154,7 +154,10 @@ impl Workspace {
 
     /// Get all windows on this workspace
     pub fn windows(&self) -> impl Iterator<Item = WindowId> + '_ {
-        self.tiled_windows.iter().chain(self.floating_windows.iter()).copied()
+        self.tiled_windows
+            .iter()
+            .chain(self.floating_windows.iter())
+            .copied()
     }
 
     /// Get the number of windows
@@ -266,20 +269,24 @@ impl WorkspaceManager {
     /// Assign a workspace to an output
     pub fn assign_to_output(&mut self, workspace_id: WorkspaceId, output: &str) {
         // Find or create output entry
-        if let Some((_, workspaces)) = self.output_workspaces.iter_mut()
-            .find(|(name, _)| name == output) 
+        if let Some((_, workspaces)) = self
+            .output_workspaces
+            .iter_mut()
+            .find(|(name, _)| name == output)
         {
             if !workspaces.contains(&workspace_id) {
                 workspaces.push(workspace_id);
             }
         } else {
-            self.output_workspaces.push((output.to_string(), vec![workspace_id]));
+            self.output_workspaces
+                .push((output.to_string(), vec![workspace_id]));
         }
     }
 
     /// Get workspaces for an output
     pub fn workspaces_for_output(&self, output: &str) -> &[WorkspaceId] {
-        self.output_workspaces.iter()
+        self.output_workspaces
+            .iter()
             .find(|(name, _)| name == output)
             .map(|(_, ws)| ws.as_slice())
             .unwrap_or(&[])

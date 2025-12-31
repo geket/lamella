@@ -38,7 +38,7 @@ impl Modifiers {
     /// Parse modifiers from a string like "Mod4+Shift"
     pub fn from_str_list(s: &str) -> Result<Self, InputError> {
         let mut mods = Modifiers::empty();
-        
+
         for part in s.split('+') {
             let part = part.trim().to_lowercase();
             match part.as_str() {
@@ -46,10 +46,10 @@ impl Modifiers {
                 "ctrl" | "control" => mods.insert(Modifiers::CTRL),
                 "alt" | "mod1" => mods.insert(Modifiers::ALT),
                 "super" | "mod4" | "logo" | "win" => mods.insert(Modifiers::SUPER),
-                _ => {} // Ignore unknown, might be key
+                _ => {}, // Ignore unknown, might be key
             }
         }
-        
+
         Ok(mods)
     }
 }
@@ -58,41 +58,134 @@ impl Modifiers {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum KeyCode {
     // Letters
-    A, B, C, D, E, F, G, H, I, J, K, L, M,
-    N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-    
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
+
     // Numbers
-    Key1, Key2, Key3, Key4, Key5,
-    Key6, Key7, Key8, Key9, Key0,
-    
+    Key1,
+    Key2,
+    Key3,
+    Key4,
+    Key5,
+    Key6,
+    Key7,
+    Key8,
+    Key9,
+    Key0,
+
     // Function keys
-    F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
-    
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+
     // Special keys
-    Escape, Tab, Space, Return, Backspace, Delete,
-    Insert, Home, End, PageUp, PageDown,
-    Left, Right, Up, Down,
-    
+    Escape,
+    Tab,
+    Space,
+    Return,
+    Backspace,
+    Delete,
+    Insert,
+    Home,
+    End,
+    PageUp,
+    PageDown,
+    Left,
+    Right,
+    Up,
+    Down,
+
     // Punctuation
-    Minus, Equal, BracketLeft, BracketRight,
-    Semicolon, Apostrophe, Grave, Backslash,
-    Comma, Period, Slash,
-    
+    Minus,
+    Equal,
+    BracketLeft,
+    BracketRight,
+    Semicolon,
+    Apostrophe,
+    Grave,
+    Backslash,
+    Comma,
+    Period,
+    Slash,
+
     // Modifiers (as keys)
-    ShiftL, ShiftR, CtrlL, CtrlR, AltL, AltR, SuperL, SuperR,
-    
+    ShiftL,
+    ShiftR,
+    CtrlL,
+    CtrlR,
+    AltL,
+    AltR,
+    SuperL,
+    SuperR,
+
     // Media keys
-    AudioMute, AudioLowerVolume, AudioRaiseVolume,
-    AudioPlay, AudioPause, AudioStop, AudioPrev, AudioNext,
-    
+    AudioMute,
+    AudioLowerVolume,
+    AudioRaiseVolume,
+    AudioPlay,
+    AudioPause,
+    AudioStop,
+    AudioPrev,
+    AudioNext,
+
     // Other
-    Print, ScrollLock, Pause,
-    NumLock, CapsLock,
-    
+    Print,
+    ScrollLock,
+    Pause,
+    NumLock,
+    CapsLock,
+
     // Numeric keypad
-    Kp0, Kp1, Kp2, Kp3, Kp4, Kp5, Kp6, Kp7, Kp8, Kp9,
-    KpDecimal, KpDivide, KpMultiply, KpSubtract, KpAdd, KpEnter,
-    
+    Kp0,
+    Kp1,
+    Kp2,
+    Kp3,
+    Kp4,
+    Kp5,
+    Kp6,
+    Kp7,
+    Kp8,
+    Kp9,
+    KpDecimal,
+    KpDivide,
+    KpMultiply,
+    KpSubtract,
+    KpAdd,
+    KpEnter,
+
     /// Unknown/unmapped key
     Unknown(u32),
 }
@@ -101,17 +194,36 @@ impl KeyCode {
     /// Parse a key name to KeyCode
     pub fn from_name(name: &str) -> Result<Self, InputError> {
         let name_lower = name.to_lowercase();
-        
+
         let key = match name_lower.as_str() {
             // Letters
-            "a" => Self::A, "b" => Self::B, "c" => Self::C, "d" => Self::D,
-            "e" => Self::E, "f" => Self::F, "g" => Self::G, "h" => Self::H,
-            "i" => Self::I, "j" => Self::J, "k" => Self::K, "l" => Self::L,
-            "m" => Self::M, "n" => Self::N, "o" => Self::O, "p" => Self::P,
-            "q" => Self::Q, "r" => Self::R, "s" => Self::S, "t" => Self::T,
-            "u" => Self::U, "v" => Self::V, "w" => Self::W, "x" => Self::X,
-            "y" => Self::Y, "z" => Self::Z,
-            
+            "a" => Self::A,
+            "b" => Self::B,
+            "c" => Self::C,
+            "d" => Self::D,
+            "e" => Self::E,
+            "f" => Self::F,
+            "g" => Self::G,
+            "h" => Self::H,
+            "i" => Self::I,
+            "j" => Self::J,
+            "k" => Self::K,
+            "l" => Self::L,
+            "m" => Self::M,
+            "n" => Self::N,
+            "o" => Self::O,
+            "p" => Self::P,
+            "q" => Self::Q,
+            "r" => Self::R,
+            "s" => Self::S,
+            "t" => Self::T,
+            "u" => Self::U,
+            "v" => Self::V,
+            "w" => Self::W,
+            "x" => Self::X,
+            "y" => Self::Y,
+            "z" => Self::Z,
+
             // Numbers
             "1" | "key1" => Self::Key1,
             "2" | "key2" => Self::Key2,
@@ -123,13 +235,21 @@ impl KeyCode {
             "8" | "key8" => Self::Key8,
             "9" | "key9" => Self::Key9,
             "0" | "key0" => Self::Key0,
-            
+
             // Function keys
-            "f1" => Self::F1, "f2" => Self::F2, "f3" => Self::F3,
-            "f4" => Self::F4, "f5" => Self::F5, "f6" => Self::F6,
-            "f7" => Self::F7, "f8" => Self::F8, "f9" => Self::F9,
-            "f10" => Self::F10, "f11" => Self::F11, "f12" => Self::F12,
-            
+            "f1" => Self::F1,
+            "f2" => Self::F2,
+            "f3" => Self::F3,
+            "f4" => Self::F4,
+            "f5" => Self::F5,
+            "f6" => Self::F6,
+            "f7" => Self::F7,
+            "f8" => Self::F8,
+            "f9" => Self::F9,
+            "f10" => Self::F10,
+            "f11" => Self::F11,
+            "f12" => Self::F12,
+
             // Special
             "escape" | "esc" => Self::Escape,
             "tab" => Self::Tab,
@@ -146,7 +266,7 @@ impl KeyCode {
             "right" => Self::Right,
             "up" => Self::Up,
             "down" => Self::Down,
-            
+
             // Punctuation
             "minus" | "-" => Self::Minus,
             "equal" | "=" => Self::Equal,
@@ -159,7 +279,7 @@ impl KeyCode {
             "comma" | "," => Self::Comma,
             "period" | "." => Self::Period,
             "slash" | "/" => Self::Slash,
-            
+
             // Media
             "xf86audiomute" | "audiomute" => Self::AudioMute,
             "xf86audiolowervolume" | "audiolowervolume" => Self::AudioLowerVolume,
@@ -169,17 +289,17 @@ impl KeyCode {
             "xf86audiostop" | "audiostop" => Self::AudioStop,
             "xf86audioprev" | "audioprev" => Self::AudioPrev,
             "xf86audionext" | "audionext" => Self::AudioNext,
-            
+
             // Other
             "print" => Self::Print,
             "scroll_lock" | "scrolllock" => Self::ScrollLock,
             "pause" => Self::Pause,
             "num_lock" | "numlock" => Self::NumLock,
             "caps_lock" | "capslock" => Self::CapsLock,
-            
+
             _ => return Err(InputError::InvalidKey(name.to_string())),
         };
-        
+
         Ok(key)
     }
 }
@@ -230,7 +350,7 @@ impl KeyBinding {
     /// Parse a binding string like "Mod4+Shift+Return"
     pub fn parse(s: &str) -> Result<Self, InputError> {
         let parts: Vec<&str> = s.split('+').collect();
-        
+
         if parts.is_empty() {
             return Err(InputError::InvalidBinding(s.to_string()));
         }
@@ -248,7 +368,7 @@ impl KeyBinding {
                 _ => {
                     // This should be the key
                     key_part = Some(part);
-                }
+                },
             }
         }
 
@@ -271,7 +391,7 @@ pub struct MouseBinding {
 impl MouseBinding {
     pub fn parse(s: &str) -> Result<Self, InputError> {
         let parts: Vec<&str> = s.split('+').collect();
-        
+
         if parts.is_empty() {
             return Err(InputError::InvalidBinding(s.to_string()));
         }
@@ -288,7 +408,7 @@ impl MouseBinding {
                 "super" | "mod4" | "logo" | "win" => modifiers.insert(Modifiers::SUPER),
                 _ => {
                     button_part = Some(part);
-                }
+                },
             }
         }
 
@@ -307,7 +427,7 @@ pub enum Command {
     // Execution
     Exec(String),
     ExecAlways(String),
-    
+
     // Window management
     Kill,
     Focus(FocusTarget),
@@ -316,38 +436,38 @@ pub enum Command {
     Floating(Toggle),
     Fullscreen(Toggle),
     Sticky(Toggle),
-    
+
     // Layout
     Split(SplitCmd),
     Layout(LayoutCmd),
-    
+
     // Workspace
     Workspace(WorkspaceTarget),
     MoveToWorkspace(WorkspaceTarget),
-    
+
     // Scratchpad
     ScratchpadShow,
     MoveToScratchpad,
-    
+
     // Marks
     Mark(String),
     Unmark(Option<String>),
     GotoMark(String),
-    
+
     // Mode
     Mode(String),
-    
+
     // System
     Reload,
     Restart,
     Exit,
-    
+
     // Gaps
     Gaps(GapCmd),
-    
+
     // Bar
     Bar(BarCmd),
-    
+
     // Unknown command
     Unknown(String),
 }
@@ -469,108 +589,98 @@ impl Command {
         match cmd.as_str() {
             "exec" => Command::Exec(args.to_string()),
             "exec_always" => Command::ExecAlways(args.to_string()),
-            
+
             "kill" => Command::Kill,
-            
-            "focus" => {
-                match args.to_lowercase().as_str() {
-                    "left" => Command::Focus(FocusTarget::Left),
-                    "right" => Command::Focus(FocusTarget::Right),
-                    "up" => Command::Focus(FocusTarget::Up),
-                    "down" => Command::Focus(FocusTarget::Down),
-                    "parent" => Command::Focus(FocusTarget::Parent),
-                    "child" => Command::Focus(FocusTarget::Child),
-                    "mode_toggle" => Command::Focus(FocusTarget::ModeToggle),
-                    _ => Command::Unknown(s.to_string()),
-                }
-            }
-            
+
+            "focus" => match args.to_lowercase().as_str() {
+                "left" => Command::Focus(FocusTarget::Left),
+                "right" => Command::Focus(FocusTarget::Right),
+                "up" => Command::Focus(FocusTarget::Up),
+                "down" => Command::Focus(FocusTarget::Down),
+                "parent" => Command::Focus(FocusTarget::Parent),
+                "child" => Command::Focus(FocusTarget::Child),
+                "mode_toggle" => Command::Focus(FocusTarget::ModeToggle),
+                _ => Command::Unknown(s.to_string()),
+            },
+
             "move" => Self::parse_move(args),
-            
-            "floating" => {
-                match args.to_lowercase().as_str() {
-                    "enable" => Command::Floating(Toggle::Enable),
-                    "disable" => Command::Floating(Toggle::Disable),
-                    "toggle" | "" => Command::Floating(Toggle::Toggle),
-                    _ => Command::Unknown(s.to_string()),
-                }
-            }
-            
-            "fullscreen" => {
-                match args.to_lowercase().as_str() {
-                    "enable" => Command::Fullscreen(Toggle::Enable),
-                    "disable" => Command::Fullscreen(Toggle::Disable),
-                    "toggle" | "" => Command::Fullscreen(Toggle::Toggle),
-                    _ => Command::Unknown(s.to_string()),
-                }
-            }
-            
-            "split" => {
-                match args.to_lowercase().as_str() {
-                    "horizontal" | "h" => Command::Split(SplitCmd::Horizontal),
-                    "vertical" | "v" => Command::Split(SplitCmd::Vertical),
-                    "toggle" | "t" => Command::Split(SplitCmd::Toggle),
-                    "none" | "n" => Command::Split(SplitCmd::None),
-                    _ => Command::Unknown(s.to_string()),
-                }
-            }
-            
-            "layout" => {
-                match args.to_lowercase().as_str() {
-                    "default" => Command::Layout(LayoutCmd::Default),
-                    "tabbed" => Command::Layout(LayoutCmd::Tabbed),
-                    "stacked" | "stacking" => Command::Layout(LayoutCmd::Stacked),
-                    "splitv" => Command::Layout(LayoutCmd::SplitV),
-                    "splith" => Command::Layout(LayoutCmd::SplitH),
-                    "toggle" => Command::Layout(LayoutCmd::Toggle),
-                    "toggle split" => Command::Layout(LayoutCmd::ToggleSplit),
-                    "toggle all" => Command::Layout(LayoutCmd::ToggleAll),
-                    _ => Command::Unknown(s.to_string()),
-                }
-            }
-            
-            "workspace" => {
-                match args.to_lowercase().as_str() {
-                    "next" => Command::Workspace(WorkspaceTarget::Next),
-                    "prev" | "previous" => Command::Workspace(WorkspaceTarget::Prev),
-                    "next_on_output" => Command::Workspace(WorkspaceTarget::NextOnOutput),
-                    "prev_on_output" => Command::Workspace(WorkspaceTarget::PrevOnOutput),
-                    "back_and_forth" => Command::Workspace(WorkspaceTarget::BackAndForth),
-                    _ => {
-                        if let Ok(num) = args.parse::<u32>() {
-                            Command::Workspace(WorkspaceTarget::Number(num))
-                        } else {
-                            Command::Workspace(WorkspaceTarget::Name(args.to_string()))
-                        }
+
+            "floating" => match args.to_lowercase().as_str() {
+                "enable" => Command::Floating(Toggle::Enable),
+                "disable" => Command::Floating(Toggle::Disable),
+                "toggle" | "" => Command::Floating(Toggle::Toggle),
+                _ => Command::Unknown(s.to_string()),
+            },
+
+            "fullscreen" => match args.to_lowercase().as_str() {
+                "enable" => Command::Fullscreen(Toggle::Enable),
+                "disable" => Command::Fullscreen(Toggle::Disable),
+                "toggle" | "" => Command::Fullscreen(Toggle::Toggle),
+                _ => Command::Unknown(s.to_string()),
+            },
+
+            "split" => match args.to_lowercase().as_str() {
+                "horizontal" | "h" => Command::Split(SplitCmd::Horizontal),
+                "vertical" | "v" => Command::Split(SplitCmd::Vertical),
+                "toggle" | "t" => Command::Split(SplitCmd::Toggle),
+                "none" | "n" => Command::Split(SplitCmd::None),
+                _ => Command::Unknown(s.to_string()),
+            },
+
+            "layout" => match args.to_lowercase().as_str() {
+                "default" => Command::Layout(LayoutCmd::Default),
+                "tabbed" => Command::Layout(LayoutCmd::Tabbed),
+                "stacked" | "stacking" => Command::Layout(LayoutCmd::Stacked),
+                "splitv" => Command::Layout(LayoutCmd::SplitV),
+                "splith" => Command::Layout(LayoutCmd::SplitH),
+                "toggle" => Command::Layout(LayoutCmd::Toggle),
+                "toggle split" => Command::Layout(LayoutCmd::ToggleSplit),
+                "toggle all" => Command::Layout(LayoutCmd::ToggleAll),
+                _ => Command::Unknown(s.to_string()),
+            },
+
+            "workspace" => match args.to_lowercase().as_str() {
+                "next" => Command::Workspace(WorkspaceTarget::Next),
+                "prev" | "previous" => Command::Workspace(WorkspaceTarget::Prev),
+                "next_on_output" => Command::Workspace(WorkspaceTarget::NextOnOutput),
+                "prev_on_output" => Command::Workspace(WorkspaceTarget::PrevOnOutput),
+                "back_and_forth" => Command::Workspace(WorkspaceTarget::BackAndForth),
+                _ => {
+                    if let Ok(num) = args.parse::<u32>() {
+                        Command::Workspace(WorkspaceTarget::Number(num))
+                    } else {
+                        Command::Workspace(WorkspaceTarget::Name(args.to_string()))
                     }
-                }
-            }
-            
-            "scratchpad" => {
-                match args.to_lowercase().as_str() {
-                    "show" => Command::ScratchpadShow,
-                    _ => Command::Unknown(s.to_string()),
-                }
-            }
-            
+                },
+            },
+
+            "scratchpad" => match args.to_lowercase().as_str() {
+                "show" => Command::ScratchpadShow,
+                _ => Command::Unknown(s.to_string()),
+            },
+
             "mark" => Command::Mark(args.to_string()),
-            "unmark" => Command::Unmark(if args.is_empty() { None } else { Some(args.to_string()) }),
-            
+            "unmark" => Command::Unmark(if args.is_empty() {
+                None
+            } else {
+                Some(args.to_string())
+            }),
+
             "mode" => Command::Mode(args.to_string()),
-            
+
             "reload" => Command::Reload,
             "restart" => Command::Restart,
             "exit" => Command::Exit,
-            
+
             "resize" => Self::parse_resize(args),
-            
+
             _ => Command::Unknown(s.to_string()),
         }
     }
 
     fn parse_move(args: &str) -> Command {
         let parts: Vec<&str> = args.split_whitespace().collect();
-        
+
         if parts.is_empty() {
             return Command::Unknown(format!("move {}", args));
         }
@@ -593,7 +703,7 @@ impl Command {
                 } else {
                     Command::Unknown(format!("move {}", args))
                 }
-            }
+            },
             "position" => {
                 if parts.len() >= 3 {
                     if let (Ok(x), Ok(y)) = (parts[1].parse::<i32>(), parts[2].parse::<i32>()) {
@@ -604,14 +714,14 @@ impl Command {
                 } else {
                     Command::Unknown(format!("move {}", args))
                 }
-            }
+            },
             _ => Command::Unknown(format!("move {}", args)),
         }
     }
 
     fn parse_resize(args: &str) -> Command {
         let parts: Vec<&str> = args.split_whitespace().collect();
-        
+
         if parts.len() < 2 {
             return Command::Unknown(format!("resize {}", args));
         }
@@ -693,8 +803,11 @@ impl Default for InputManager {
 impl InputManager {
     pub fn new() -> Self {
         let mut modes = HashMap::new();
-        modes.insert("default".to_string(), BindingMode::new("default".to_string()));
-        
+        modes.insert(
+            "default".to_string(),
+            BindingMode::new("default".to_string()),
+        );
+
         Self {
             current_mode: "default".to_string(),
             modes,
@@ -710,11 +823,13 @@ impl InputManager {
             if let Ok(key_binding) = KeyBinding::parse(&binding_config.keys) {
                 let command = Command::parse(&binding_config.command);
                 let mode_name = &binding_config.mode;
-                
+
                 // Get or create mode
-                let mode = self.modes.entry(mode_name.clone())
+                let mode = self
+                    .modes
+                    .entry(mode_name.clone())
                     .or_insert_with(|| BindingMode::new(mode_name.clone()));
-                
+
                 mode.add_binding(key_binding, command);
             }
         }
@@ -729,8 +844,7 @@ impl InputManager {
 
         // Check for binding
         let binding = KeyBinding::new(self.modifiers, key);
-        self.modes.get(&self.current_mode)?
-            .bindings.get(&binding)
+        self.modes.get(&self.current_mode)?.bindings.get(&binding)
     }
 
     /// Handle a raw keycode press (for compositor integration)
@@ -802,7 +916,7 @@ impl InputManager {
             88 => KeyCode::F12,
             _ => return None,
         };
-        
+
         self.key_pressed(key)
     }
 
@@ -854,7 +968,10 @@ mod tests {
         assert!(matches!(cmd, Command::Focus(FocusTarget::Left)));
 
         let cmd = Command::parse("workspace 3");
-        assert!(matches!(cmd, Command::Workspace(WorkspaceTarget::Number(3))));
+        assert!(matches!(
+            cmd,
+            Command::Workspace(WorkspaceTarget::Number(3))
+        ));
     }
 
     #[test]

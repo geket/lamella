@@ -160,14 +160,14 @@ impl Color32F {
                 let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
                 let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
                 (r, g, b, 255u8)
-            }
+            },
             8 => {
                 let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
                 let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
                 let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
                 let a = u8::from_str_radix(&hex[6..8], 16).ok()?;
                 (r, g, b, a)
-            }
+            },
             _ => return None,
         };
 
@@ -395,7 +395,7 @@ impl EasingCurve {
                 } else {
                     1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
                 }
-            }
+            },
         }
     }
 }
@@ -477,7 +477,10 @@ impl WindowAnimation {
             x: self.x.as_ref().map_or(base.x, |a| a.value() as i32),
             y: self.y.as_ref().map_or(base.y, |a| a.value() as i32),
             width: self.width.as_ref().map_or(base.width, |a| a.value() as u32),
-            height: self.height.as_ref().map_or(base.height, |a| a.value() as u32),
+            height: self
+                .height
+                .as_ref()
+                .map_or(base.height, |a| a.value() as u32),
         }
     }
 
@@ -526,16 +529,36 @@ impl AnimationManager {
         let anim = self.animations.entry(window_id).or_default();
 
         if from.x != to.x {
-            anim.x = Some(Animation::new(from.x as f64, to.x as f64, self.duration, self.curve));
+            anim.x = Some(Animation::new(
+                from.x as f64,
+                to.x as f64,
+                self.duration,
+                self.curve,
+            ));
         }
         if from.y != to.y {
-            anim.y = Some(Animation::new(from.y as f64, to.y as f64, self.duration, self.curve));
+            anim.y = Some(Animation::new(
+                from.y as f64,
+                to.y as f64,
+                self.duration,
+                self.curve,
+            ));
         }
         if from.width != to.width {
-            anim.width = Some(Animation::new(from.width as f64, to.width as f64, self.duration, self.curve));
+            anim.width = Some(Animation::new(
+                from.width as f64,
+                to.width as f64,
+                self.duration,
+                self.curve,
+            ));
         }
         if from.height != to.height {
-            anim.height = Some(Animation::new(from.height as f64, to.height as f64, self.duration, self.curve));
+            anim.height = Some(Animation::new(
+                from.height as f64,
+                to.height as f64,
+                self.duration,
+                self.curve,
+            ));
         }
     }
 
@@ -546,7 +569,12 @@ impl AnimationManager {
         }
 
         let anim = self.animations.entry(window_id).or_default();
-        anim.opacity = Some(Animation::new(from as f64, to as f64, self.duration, self.curve));
+        anim.opacity = Some(Animation::new(
+            from as f64,
+            to as f64,
+            self.duration,
+            self.curve,
+        ));
     }
 
     /// Update animations, removing completed ones
@@ -750,10 +778,8 @@ pub fn render_border<R: Renderer>(
     ));
 
     for rect in rects {
-        let phys_rect = Rectangle::from_loc_and_size(
-            (rect.loc.x, rect.loc.y),
-            (rect.size.w, rect.size.h),
-        );
+        let phys_rect =
+            Rectangle::from_loc_and_size((rect.loc.x, rect.loc.y), (rect.size.w, rect.size.h));
         render_solid_rect(renderer, phys_rect, config.color);
     }
 }
@@ -837,8 +863,18 @@ mod tests {
         let mut manager = AnimationManager::new();
         let window_id = Uuid::new_v4();
 
-        let from = Geometry { x: 0, y: 0, width: 100, height: 100 };
-        let to = Geometry { x: 50, y: 50, width: 200, height: 200 };
+        let from = Geometry {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+        };
+        let to = Geometry {
+            x: 50,
+            y: 50,
+            width: 200,
+            height: 200,
+        };
 
         manager.animate_geometry(window_id, from, to);
         assert!(manager.is_animating(window_id));
@@ -846,10 +882,7 @@ mod tests {
 
     #[test]
     fn test_tab_bar_rects() {
-        let mut tab_bar = TabBarElement::new(
-            Rectangle::from_loc_and_size((0, 0), (300, 30)),
-            30,
-        );
+        let mut tab_bar = TabBarElement::new(Rectangle::from_loc_and_size((0, 0), (300, 30)), 30);
 
         tab_bar.add_tab(TabInfo {
             window_id: Uuid::new_v4(),

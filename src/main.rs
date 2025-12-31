@@ -72,7 +72,11 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     // Initialize logging
-    let log_level = if args.debug { Level::DEBUG } else { Level::INFO };
+    let log_level = if args.debug {
+        Level::DEBUG
+    } else {
+        Level::INFO
+    };
     let subscriber = FmtSubscriber::builder()
         .with_max_level(log_level)
         .with_target(true)
@@ -96,11 +100,11 @@ fn main() -> Result<()> {
         Ok(cfg) => {
             info!("Configuration loaded successfully");
             cfg
-        }
+        },
         Err(e) => {
             warn!("Failed to load config: {}, using defaults", e);
             Config::default()
-        }
+        },
     };
 
     if args.validate {
@@ -132,19 +136,19 @@ fn main() -> Result<()> {
             {
                 anyhow::bail!("X11 feature not compiled in. Rebuild with --features x11");
             }
-        }
+        },
         "drm" => {
             // DRM backend for production use
             warn!("DRM backend not yet implemented, falling back to winit");
             compositor::run_winit(config)
-        }
+        },
         _ if use_winit => {
             info!("Using winit backend (nested/development mode)");
             compositor::run_winit(config)
-        }
+        },
         _ => {
             warn!("No suitable backend detected, using winit");
             compositor::run_winit(config)
-        }
+        },
     }
 }

@@ -175,7 +175,8 @@ impl Container {
         }
 
         let min_ratio = 0.05; // Minimum 5% size
-        let max_delta = (self.ratios[index + 1] - min_ratio).min(1.0 - min_ratio - self.ratios[index]);
+        let max_delta =
+            (self.ratios[index + 1] - min_ratio).min(1.0 - min_ratio - self.ratios[index]);
         let min_delta = -(self.ratios[index] - min_ratio);
         let clamped_delta = delta.clamp(min_delta, max_delta);
 
@@ -213,7 +214,9 @@ impl Container {
 
     /// Check if this container contains a window
     pub fn contains_window(&self, window_id: WindowId) -> bool {
-        self.children.iter().any(|node| matches!(node, LayoutNode::Window(id) if *id == window_id))
+        self.children
+            .iter()
+            .any(|node| matches!(node, LayoutNode::Window(id) if *id == window_id))
     }
 }
 
@@ -277,7 +280,7 @@ impl LayoutTree {
     /// Remove a window from the layout
     pub fn remove_window(&mut self, window_id: WindowId) -> bool {
         let node = LayoutNode::Window(window_id);
-        
+
         // Find and remove from container
         let mut container_to_remove = None;
         for (container_id, container) in self.containers.iter_mut() {
@@ -315,7 +318,7 @@ impl LayoutTree {
         if let Some(parent_id) = container.parent {
             if let Some(parent) = self.containers.get_mut(&parent_id) {
                 parent.remove_node(&LayoutNode::Container(container_id));
-                
+
                 // If parent now has only one child, flatten
                 if parent.children.len() == 1 {
                     // This is simplified - full implementation would flatten
@@ -420,7 +423,7 @@ impl LayoutTree {
 
                     x += width as i32 + gap as i32;
                 }
-            }
+            },
             SplitDirection::Vertical => {
                 let available_height = geometry.height.saturating_sub(total_gap);
                 let mut y = geometry.y;
@@ -438,7 +441,7 @@ impl LayoutTree {
 
                     y += height as i32 + gap as i32;
                 }
-            }
+            },
         }
     }
 
@@ -447,7 +450,7 @@ impl LayoutTree {
         // In tabbed/stacked mode, only the focused child is visible at full size
         // (In a real implementation, we'd reserve space for tabs/titles)
         let tab_height = 24u32; // Height for tab bar
-        
+
         let content_geo = match container.layout {
             LayoutMode::Tabbed => Geometry::new(
                 geometry.x,
@@ -463,7 +466,7 @@ impl LayoutTree {
                     geometry.width,
                     geometry.height.saturating_sub(header_height),
                 )
-            }
+            },
             _ => geometry,
         };
 
@@ -480,17 +483,17 @@ impl LayoutTree {
         match child {
             LayoutNode::Container(id) => {
                 self.layout_container(*id, geometry);
-            }
+            },
             LayoutNode::Window(id) => {
                 self.window_geometries.insert(*id, geometry);
-            }
+            },
         }
     }
 
     /// Move focus in a direction
     pub fn focus_direction(&mut self, direction: Direction) -> Option<WindowId> {
         let container_id = self.focused_container?;
-        
+
         // First, update focus in container
         {
             let container = self.containers.get_mut(&container_id)?;
@@ -525,11 +528,19 @@ impl LayoutTree {
                 let current = container.focused_child;
                 let target = match direction {
                     Direction::Left | Direction::Up => {
-                        if current > 0 { current - 1 } else { return; }
-                    }
+                        if current > 0 {
+                            current - 1
+                        } else {
+                            return;
+                        }
+                    },
                     Direction::Right | Direction::Down => {
-                        if current < container.children.len() - 1 { current + 1 } else { return; }
-                    }
+                        if current < container.children.len() - 1 {
+                            current + 1
+                        } else {
+                            return;
+                        }
+                    },
                 };
 
                 container.children.swap(current, target);
@@ -545,9 +556,13 @@ impl LayoutTree {
             if let Some(container) = self.containers.get_mut(&container_id) {
                 let delta = amount as f64 / 1000.0; // Convert pixels to ratio
                 match direction {
-                    Direction::Left => container.resize_child(container.focused_child.saturating_sub(1), -delta),
+                    Direction::Left => {
+                        container.resize_child(container.focused_child.saturating_sub(1), -delta)
+                    },
                     Direction::Right => container.resize_child(container.focused_child, delta),
-                    Direction::Up => container.resize_child(container.focused_child.saturating_sub(1), -delta),
+                    Direction::Up => {
+                        container.resize_child(container.focused_child.saturating_sub(1), -delta)
+                    },
                     Direction::Down => container.resize_child(container.focused_child, delta),
                 }
             }
@@ -603,10 +618,10 @@ mod tests {
     fn test_layout_tree_add_window() {
         let mut tree = LayoutTree::new();
         let config = Config::default();
-        
+
         let window1 = Uuid::new_v4();
         let window2 = Uuid::new_v4();
-        
+
         tree.add_window(window1, &config);
         tree.add_window(window2, &config);
 
@@ -618,7 +633,7 @@ mod tests {
     #[test]
     fn test_geometry_split() {
         let geo = Geometry::new(0, 0, 1000, 500);
-        
+
         let (left, right) = geo.split_horizontal(0.5);
         assert_eq!(left.width, 500);
         assert_eq!(right.width, 500);

@@ -9,7 +9,7 @@ pub mod atoms {
     pub const WM_STATE: &str = "WM_STATE";
     pub const WM_CLASS: &str = "WM_CLASS";
     pub const WM_NAME: &str = "WM_NAME";
-    
+
     pub const NET_SUPPORTED: &str = "_NET_SUPPORTED";
     pub const NET_WM_NAME: &str = "_NET_WM_NAME";
     pub const NET_WM_STATE: &str = "_NET_WM_STATE";
@@ -95,39 +95,39 @@ impl std::fmt::Display for SessionType {
 #[cfg(feature = "x11")]
 pub mod x11_backend {
     use super::*;
-    
+
     pub struct X11Backend {
         _placeholder: (),
     }
-    
+
     impl X11Backend {
         pub fn new() -> Result<Self, BackendError> {
             Ok(Self { _placeholder: () })
         }
     }
-    
+
     impl Default for X11Backend {
         fn default() -> Self {
             Self { _placeholder: () }
         }
     }
-    
+
     impl DisplayBackend for X11Backend {
         fn init(&mut self) -> Result<(), BackendError> {
             tracing::info!("Initializing X11 backend");
             Ok(())
         }
-        
+
         fn run(&mut self) -> Result<(), BackendError> {
             tracing::info!("Running X11 event loop");
             Ok(())
         }
-        
+
         fn shutdown(&mut self) -> Result<(), BackendError> {
             tracing::info!("Shutting down X11 backend");
             Ok(())
         }
-        
+
         fn backend_type(&self) -> BackendType {
             BackendType::X11Native
         }
@@ -137,12 +137,12 @@ pub mod x11_backend {
 #[cfg(feature = "xwayland")]
 pub mod xwayland_bridge {
     use super::*;
-    
+
     pub struct XWaylandBridge {
         _process: Option<std::process::Child>,
         display_number: Option<u32>,
     }
-    
+
     impl XWaylandBridge {
         pub fn new() -> Self {
             Self {
@@ -150,14 +150,14 @@ pub mod xwayland_bridge {
                 display_number: None,
             }
         }
-        
+
         pub fn start(&mut self) -> Result<(), BackendError> {
             tracing::info!("Starting XWayland server");
             let display_num = self.find_free_display()?;
             self.display_number = Some(display_num);
             Ok(())
         }
-        
+
         pub fn stop(&mut self) -> Result<(), BackendError> {
             if let Some(ref mut process) = self._process {
                 let _ = process.kill();
@@ -166,11 +166,11 @@ pub mod xwayland_bridge {
             self.display_number = None;
             Ok(())
         }
-        
+
         pub fn display(&self) -> Option<String> {
             self.display_number.map(|n| format!(":{}", n))
         }
-        
+
         fn find_free_display(&self) -> Result<u32, BackendError> {
             for i in 0..64 {
                 let socket_path = format!("/tmp/.X11-unix/X{}", i);
@@ -181,7 +181,7 @@ pub mod xwayland_bridge {
             Err(BackendError::X11Error("No free X11 display".to_string()))
         }
     }
-    
+
     impl Default for XWaylandBridge {
         fn default() -> Self {
             Self::new()
@@ -192,13 +192,13 @@ pub mod xwayland_bridge {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_session_detection() {
         let session = detect_session_type();
         println!("Detected session type: {}", session);
     }
-    
+
     #[test]
     fn test_atom_names() {
         assert_eq!(atoms::WM_PROTOCOLS, "WM_PROTOCOLS");
