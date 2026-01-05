@@ -53,7 +53,7 @@ pub enum ResizeEdge {
 
 impl ResizeEdge {
     /// Determine resize edge from click position relative to window
-    pub fn from_point(px: f64, py: f64, geo: Geometry) -> Self {
+    pub fn from_point(px: f64, py: f64, geo: &Geometry) -> Self {
         let x = px - f64::from(geo.x);
         let y = py - f64::from(geo.y);
         let width = f64::from(geo.width);
@@ -435,7 +435,7 @@ impl Fluxway {
         // Convert raw keycode to KeyCode (simplified - would need proper mapping)
         // For now, just check bindings directly
         if pressed {
-            let command = self.input_manager.key_pressed_raw(keycode).copied();
+            let command = self.input_manager.key_pressed_raw(keycode).cloned();
             if let Some(cmd) = command {
                 self.handle_command(cmd);
                 return true;

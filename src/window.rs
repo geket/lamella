@@ -236,7 +236,7 @@ impl Window {
     }
 
     /// Check if window should be floating by default
-    pub const fn should_float(&self) -> bool {
+    pub fn should_float(&self) -> bool {
         matches!(
             self.window_type,
             WindowType::Dialog
@@ -300,17 +300,17 @@ impl Window {
     }
 
     /// Check if window is visible
-    pub const fn is_visible(&self) -> bool {
+    pub fn is_visible(&self) -> bool {
         !self.state.contains(WindowState::HIDDEN)
     }
 
     /// Check if window is tiled (not floating)
-    pub const fn is_tiled(&self) -> bool {
+    pub fn is_tiled(&self) -> bool {
         !self.state.contains(WindowState::FLOATING) && !self.state.contains(WindowState::FULLSCREEN)
     }
 
     /// Check if window is focused
-    pub const fn is_focused(&self) -> bool {
+    pub fn is_focused(&self) -> bool {
         self.state.contains(WindowState::FOCUSED)
     }
 
@@ -343,7 +343,7 @@ impl Window {
     }
 
     /// Get effective border width
-    pub const fn border_width(&self) -> u32 {
+    pub fn border_width(&self) -> u32 {
         if self.state.contains(WindowState::FULLSCREEN) {
             return 0;
         }

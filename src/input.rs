@@ -962,13 +962,16 @@ mod tests {
     #[test]
     fn test_command_parse() {
         let cmd = Command::parse("exec alacritty");
-        assert!(matches!(cmd, Self::Exec(s) if s == "alacritty"));
+        assert!(matches!(cmd, Command::Exec(s) if s == "alacritty"));
 
         let cmd = Command::parse("focus left");
-        assert!(matches!(cmd, Self::Focus(FocusTarget::Left)));
+        assert!(matches!(cmd, Command::Focus(FocusTarget::Left)));
 
         let cmd = Command::parse("workspace 3");
-        assert!(matches!(cmd, Self::Workspace(WorkspaceTarget::Number(3))));
+        assert!(matches!(
+            cmd,
+            Command::Workspace(WorkspaceTarget::Number(3))
+        ));
     }
 
     #[test]

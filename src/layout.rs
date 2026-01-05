@@ -585,11 +585,11 @@ impl Direction {
         }
     }
 
-    pub const fn is_horizontal(self) -> bool {
+    pub fn is_horizontal(self) -> bool {
         matches!(self, Self::Left | Self::Right)
     }
 
-    pub const fn is_vertical(self) -> bool {
+    pub fn is_vertical(self) -> bool {
         matches!(self, Self::Up | Self::Down)
     }
 }
