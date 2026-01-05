@@ -77,17 +77,17 @@ impl ResizeEdge {
         }
     }
 
-    /// Convert to ResizeEdges bitflags
-    pub fn to_edges(&self) -> ResizeEdges {
+    /// Convert to `ResizeEdges` bitflags
+    pub fn to_edges(self) -> ResizeEdges {
         match self {
-            ResizeEdge::Top => ResizeEdges::TOP,
-            ResizeEdge::Bottom => ResizeEdges::BOTTOM,
-            ResizeEdge::Left => ResizeEdges::LEFT,
-            ResizeEdge::Right => ResizeEdges::RIGHT,
-            ResizeEdge::TopLeft => ResizeEdges::TOP | ResizeEdges::LEFT,
-            ResizeEdge::TopRight => ResizeEdges::TOP | ResizeEdges::RIGHT,
-            ResizeEdge::BottomLeft => ResizeEdges::BOTTOM | ResizeEdges::LEFT,
-            ResizeEdge::BottomRight => ResizeEdges::BOTTOM | ResizeEdges::RIGHT,
+            Self::Top => ResizeEdges::TOP,
+            Self::Bottom => ResizeEdges::BOTTOM,
+            Self::Left => ResizeEdges::LEFT,
+            Self::Right => ResizeEdges::RIGHT,
+            Self::TopLeft => ResizeEdges::TOP | ResizeEdges::LEFT,
+            Self::TopRight => ResizeEdges::TOP | ResizeEdges::RIGHT,
+            Self::BottomLeft => ResizeEdges::BOTTOM | ResizeEdges::LEFT,
+            Self::BottomRight => ResizeEdges::BOTTOM | ResizeEdges::RIGHT,
         }
     }
 }
@@ -247,7 +247,7 @@ impl Fluxway {
                 match toggle {
                     Toggle::Enable => window.state.insert(WindowState::FLOATING),
                     Toggle::Disable => window.state.remove(WindowState::FLOATING),
-                    Toggle::Toggle => window.toggle_floating(),
+                    Toggle::Switch => window.toggle_floating(),
                 }
                 info!("Floating state changed for window: {:?}", window_id);
             }
@@ -261,7 +261,7 @@ impl Fluxway {
                 let enable = match toggle {
                     Toggle::Enable => true,
                     Toggle::Disable => false,
-                    Toggle::Toggle => !window.state.contains(WindowState::FULLSCREEN),
+                    Toggle::Switch => !window.state.contains(WindowState::FULLSCREEN),
                 };
                 // Get output geometry (use default for now)
                 let output_geo = Geometry::new(0, 0, 1920, 1080);
@@ -278,7 +278,7 @@ impl Fluxway {
                 match toggle {
                     Toggle::Enable => window.state.insert(WindowState::STICKY),
                     Toggle::Disable => window.state.remove(WindowState::STICKY),
-                    Toggle::Toggle => {
+                    Toggle::Switch => {
                         if window.state.contains(WindowState::STICKY) {
                             window.state.remove(WindowState::STICKY);
                         } else {

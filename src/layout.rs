@@ -22,9 +22,10 @@ use crate::window::WindowId;
 pub type ContainerId = Uuid;
 
 /// Direction for splits
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SplitDirection {
+    #[default]
     Horizontal,
     Vertical,
 }
@@ -35,12 +36,6 @@ impl SplitDirection {
             Self::Horizontal => Self::Vertical,
             Self::Vertical => Self::Horizontal,
         }
-    }
-}
-
-impl Default for SplitDirection {
-    fn default() -> Self {
-        Self::Horizontal
     }
 }
 
@@ -259,7 +254,7 @@ impl LayoutTree {
         // If no root, create one
         if self.root.is_none() {
             let mut root = Container::new_split(self.default_direction);
-            root.gap = config.gaps.inner as u32;
+            root.gap = config.gaps.inner;
             root.add_child(node);
             let root_id = root.id;
             self.containers.insert(root_id, root);

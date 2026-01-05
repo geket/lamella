@@ -180,7 +180,7 @@ impl Color32F {
     }
 
     /// Convert to array [r, g, b, a]
-    pub fn to_array(&self) -> [f32; 4] {
+    pub const fn to_array(self) -> [f32; 4] {
         [self.r, self.g, self.b, self.a]
     }
 
@@ -368,18 +368,13 @@ impl TabBarElement {
 }
 
 /// Animation easing curve
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum EasingCurve {
     Linear,
+    #[default]
     EaseOutCubic,
     EaseOutQuad,
     EaseInOutCubic,
-}
-
-impl Default for EasingCurve {
-    fn default() -> Self {
-        Self::EaseOutCubic
-    }
 }
 
 impl EasingCurve {
@@ -633,19 +628,14 @@ impl<'a> RenderContext<'a> {
 }
 
 /// Wallpaper display mode
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum WallpaperMode {
     Stretch,
     Fit,
+    #[default]
     Fill,
     Center,
     Tile,
-}
-
-impl Default for WallpaperMode {
-    fn default() -> Self {
-        Self::Fill
-    }
 }
 
 /// Wallpaper configuration

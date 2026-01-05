@@ -19,8 +19,7 @@ fn layout_calculation_benchmark(c: &mut Criterion) {
             |b, &n| {
                 b.iter(|| {
                     // Placeholder for actual layout calculation
-                    let result = black_box(n * 2);
-                    result
+                    black_box(n * 2)
                 });
             },
         );

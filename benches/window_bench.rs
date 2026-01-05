@@ -11,18 +11,16 @@ fn window_creation_benchmark(c: &mut Criterion) {
     group.bench_function("create_window", |b| {
         b.iter(|| {
             // Placeholder for window creation
-            let id = black_box(uuid::Uuid::new_v4());
-            id
+            black_box(uuid::Uuid::new_v4())
         });
     });
 
     group.bench_function("create_window_with_properties", |b| {
         b.iter(|| {
             // Placeholder for window creation with full properties
-            let id = black_box(uuid::Uuid::new_v4());
             let _title = black_box("Window Title".to_string());
             let _app_id = black_box("app.example".to_string());
-            id
+            black_box(uuid::Uuid::new_v4())
         });
     });
 
@@ -36,7 +34,7 @@ fn window_state_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let mut state = black_box(0u32);
             state ^= 1 << 4; // Toggle floating bit
-            state
+            black_box(state)
         });
     });
 
@@ -44,7 +42,7 @@ fn window_state_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let mut state = black_box(0u32);
             state ^= 1 << 1; // Toggle fullscreen bit
-            state
+            black_box(state)
         });
     });
 

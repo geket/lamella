@@ -14,11 +14,11 @@ use crate::config::BindingConfig;
 #[derive(Debug, Error)]
 pub enum InputError {
     #[error("Invalid key: {0}")]
-    InvalidKey(String),
+    Key(String),
     #[error("Invalid modifier: {0}")]
-    InvalidModifier(String),
+    Modifier(String),
     #[error("Invalid binding: {0}")]
-    InvalidBinding(String),
+    Binding(String),
 }
 
 bitflags! {
@@ -297,7 +297,7 @@ impl KeyCode {
             "num_lock" | "numlock" => Self::NumLock,
             "caps_lock" | "capslock" => Self::CapsLock,
 
-            _ => return Err(InputError::InvalidKey(name.to_string())),
+            _ => return Err(InputError::Key(name.to_string())),
         };
 
         Ok(key)
@@ -330,7 +330,7 @@ impl MouseButton {
             "button7" | "scrollright" => Ok(Self::ScrollRight),
             "button8" | "extra1" => Ok(Self::Extra1),
             "button9" | "extra2" => Ok(Self::Extra2),
-            _ => Err(InputError::InvalidKey(name.to_string())),
+            _ => Err(InputError::Key(name.to_string())),
         }
     }
 }
@@ -352,7 +352,7 @@ impl KeyBinding {
         let parts: Vec<&str> = s.split('+').collect();
 
         if parts.is_empty() {
-            return Err(InputError::InvalidBinding(s.to_string()));
+            return Err(InputError::Binding(s.to_string()));
         }
 
         let mut modifiers = Modifiers::empty();
@@ -374,7 +374,7 @@ impl KeyBinding {
 
         let key = match key_part {
             Some(k) => KeyCode::from_name(k)?,
-            None => return Err(InputError::InvalidBinding(s.to_string())),
+            None => return Err(InputError::Binding(s.to_string())),
         };
 
         Ok(Self { modifiers, key })
@@ -393,7 +393,7 @@ impl MouseBinding {
         let parts: Vec<&str> = s.split('+').collect();
 
         if parts.is_empty() {
-            return Err(InputError::InvalidBinding(s.to_string()));
+            return Err(InputError::Binding(s.to_string()));
         }
 
         let mut modifiers = Modifiers::empty();
@@ -414,7 +414,7 @@ impl MouseBinding {
 
         let button = match button_part {
             Some(b) => MouseButton::from_name(b)?,
-            None => return Err(InputError::InvalidBinding(s.to_string())),
+            None => return Err(InputError::Binding(s.to_string())),
         };
 
         Ok(Self { modifiers, button })
@@ -476,7 +476,7 @@ pub enum Command {
 pub enum Toggle {
     Enable,
     Disable,
-    Toggle,
+    Switch,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -608,14 +608,14 @@ impl Command {
             "floating" => match args.to_lowercase().as_str() {
                 "enable" => Command::Floating(Toggle::Enable),
                 "disable" => Command::Floating(Toggle::Disable),
-                "toggle" | "" => Command::Floating(Toggle::Toggle),
+                "toggle" | "" => Command::Floating(Toggle::Switch),
                 _ => Command::Unknown(s.to_string()),
             },
 
             "fullscreen" => match args.to_lowercase().as_str() {
                 "enable" => Command::Fullscreen(Toggle::Enable),
                 "disable" => Command::Fullscreen(Toggle::Disable),
-                "toggle" | "" => Command::Fullscreen(Toggle::Toggle),
+                "toggle" | "" => Command::Fullscreen(Toggle::Switch),
                 _ => Command::Unknown(s.to_string()),
             },
 
