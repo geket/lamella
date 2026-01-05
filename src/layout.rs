@@ -31,7 +31,7 @@ pub enum SplitDirection {
 }
 
 impl SplitDirection {
-    pub fn toggle(&self) -> Self {
+    pub const fn toggle(self) -> Self {
         match self {
             Self::Horizontal => Self::Vertical,
             Self::Vertical => Self::Horizontal,
@@ -576,7 +576,7 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn opposite(&self) -> Self {
+    pub const fn opposite(self) -> Self {
         match self {
             Self::Left => Self::Right,
             Self::Right => Self::Left,
@@ -585,11 +585,11 @@ impl Direction {
         }
     }
 
-    pub fn is_horizontal(&self) -> bool {
+    pub const fn is_horizontal(self) -> bool {
         matches!(self, Self::Left | Self::Right)
     }
 
-    pub fn is_vertical(&self) -> bool {
+    pub const fn is_vertical(self) -> bool {
         matches!(self, Self::Up | Self::Down)
     }
 }

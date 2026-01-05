@@ -31,7 +31,7 @@ pub struct Geometry {
 }
 
 impl Geometry {
-    pub fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
+    pub const fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
         Self {
             x,
             y,
@@ -40,14 +40,20 @@ impl Geometry {
         }
     }
 
-    pub fn contains(&self, x: i32, y: i32) -> bool {
+    /// Check if point (x, y) is within this geometry
+    /// Note: width/height to i32 cast is safe for reasonable window sizes
+    #[allow(clippy::cast_possible_wrap)]
+    pub const fn contains(self, x: i32, y: i32) -> bool {
         x >= self.x
             && x < self.x + self.width as i32
             && y >= self.y
             && y < self.y + self.height as i32
     }
 
-    pub fn intersects(&self, other: &Geometry) -> bool {
+    /// Check if this geometry intersects with another
+    /// Note: width/height to i32 cast is safe for reasonable window sizes
+    #[allow(clippy::cast_possible_wrap)]
+    pub const fn intersects(self, other: Self) -> bool {
         self.x < other.x + other.width as i32
             && self.x + self.width as i32 > other.x
             && self.y < other.y + other.height as i32
@@ -55,23 +61,33 @@ impl Geometry {
     }
 
     /// Split this geometry horizontally at the given ratio (0.0 to 1.0)
-    pub fn split_horizontal(&self, ratio: f64) -> (Geometry, Geometry) {
-        let left_width = (self.width as f64 * ratio) as u32;
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
+    pub fn split_horizontal(self, ratio: f64) -> (Self, Self) {
+        let left_width = (f64::from(self.width) * ratio) as u32;
         let right_width = self.width - left_width;
 
-        let left = Geometry::new(self.x, self.y, left_width, self.height);
-        let right = Geometry::new(self.x + left_width as i32, self.y, right_width, self.height);
+        let left = Self::new(self.x, self.y, left_width, self.height);
+        let right = Self::new(self.x + left_width as i32, self.y, right_width, self.height);
 
         (left, right)
     }
 
     /// Split this geometry vertically at the given ratio (0.0 to 1.0)
-    pub fn split_vertical(&self, ratio: f64) -> (Geometry, Geometry) {
-        let top_height = (self.height as f64 * ratio) as u32;
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
+    pub fn split_vertical(self, ratio: f64) -> (Self, Self) {
+        let top_height = (f64::from(self.height) * ratio) as u32;
         let bottom_height = self.height - top_height;
 
-        let top = Geometry::new(self.x, self.y, self.width, top_height);
-        let bottom = Geometry::new(
+        let top = Self::new(self.x, self.y, self.width, top_height);
+        let bottom = Self::new(
             self.x,
             self.y + top_height as i32,
             self.width,
@@ -227,7 +243,7 @@ impl State {
 
         // Create default workspaces
         for i in 1..=10 {
-            let workspace = Workspace::new(format!("{}", i));
+            let workspace = Workspace::new(format!("{i}"));
             state.workspaces.insert(workspace.id, workspace);
         }
 
@@ -473,7 +489,7 @@ impl State {
     }
 
     /// Check if layout needs recalculation
-    pub fn needs_layout(&self) -> bool {
+    pub const fn needs_layout(&self) -> bool {
         self.layout_dirty
     }
 }

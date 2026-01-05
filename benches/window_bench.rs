@@ -3,6 +3,11 @@
 //! These benchmarks measure the performance of window management operations,
 //! including creation, destruction, and state changes.
 
+// Benchmarks legitimately use single-char names for geometry math (x, y, w, h)
+// and explicit casts to mirror hot-path compositor code patterns.
+#![allow(clippy::many_single_char_names)]
+#![allow(clippy::cast_lossless)]
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn window_creation_benchmark(c: &mut Criterion) {
@@ -48,7 +53,7 @@ fn window_state_benchmark(c: &mut Criterion) {
 
     group.bench_function("check_multiple_states", |b| {
         b.iter(|| {
-            let state = black_box(0b11010101u32);
+            let state = black_box(0b1101_0101_u32);
             let focused = (state & (1 << 0)) != 0;
             let fullscreen = (state & (1 << 1)) != 0;
             let hidden = (state & (1 << 3)) != 0;
@@ -84,7 +89,7 @@ fn window_geometry_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let (x, y, w, h) = black_box((0, 0, 1920, 1080));
             let ratio = black_box(0.5f64);
-            let left_w = (w as f64 * ratio) as i32;
+            let left_w = (f64::from(w) * ratio) as i32;
             let right_w = w - left_w;
             black_box(((x, y, left_w, h), (x + left_w, y, right_w, h)))
         });
@@ -98,7 +103,7 @@ fn window_lookup_benchmark(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("window_lookup");
 
-    for size in [10, 50, 100, 500, 1000].iter() {
+    for size in &[10, 50, 100, 500, 1000] {
         group.bench_with_input(BenchmarkId::new("hashmap_lookup", size), size, |b, &n| {
             let mut map: HashMap<uuid::Uuid, u32> = HashMap::new();
             let mut keys = Vec::new();

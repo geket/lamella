@@ -39,7 +39,7 @@ pub struct Fluxway {
 }
 
 /// Resize edge for window resizing
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResizeEdge {
     Top,
     Bottom,
@@ -53,11 +53,11 @@ pub enum ResizeEdge {
 
 impl ResizeEdge {
     /// Determine resize edge from click position relative to window
-    pub fn from_point(px: f64, py: f64, geo: &Geometry) -> Self {
-        let x = px - geo.x as f64;
-        let y = py - geo.y as f64;
-        let width = geo.width as f64;
-        let height = geo.height as f64;
+    pub fn from_point(px: f64, py: f64, geo: Geometry) -> Self {
+        let x = px - f64::from(geo.x);
+        let y = py - f64::from(geo.y);
+        let width = f64::from(geo.width);
+        let height = f64::from(geo.height);
 
         let left = x < width / 3.0;
         let right = x > width * 2.0 / 3.0;
@@ -65,15 +65,15 @@ impl ResizeEdge {
         let bottom = y > height * 2.0 / 3.0;
 
         match (left, right, top, bottom) {
-            (true, _, true, _) => ResizeEdge::TopLeft,
-            (_, true, true, _) => ResizeEdge::TopRight,
-            (true, _, _, true) => ResizeEdge::BottomLeft,
-            (_, true, _, true) => ResizeEdge::BottomRight,
-            (true, _, _, _) => ResizeEdge::Left,
-            (_, true, _, _) => ResizeEdge::Right,
-            (_, _, true, _) => ResizeEdge::Top,
-            (_, _, _, true) => ResizeEdge::Bottom,
-            _ => ResizeEdge::BottomRight,
+            (true, _, true, _) => Self::TopLeft,
+            (_, true, true, _) => Self::TopRight,
+            (true, _, _, true) => Self::BottomLeft,
+            (_, true, _, true) => Self::BottomRight,
+            (true, _, _, _) => Self::Left,
+            (_, true, _, _) => Self::Right,
+            (_, _, true, _) => Self::Top,
+            (_, _, _, true) => Self::Bottom,
+            _ => Self::BottomRight,
         }
     }
 
@@ -118,7 +118,7 @@ impl Fluxway {
 
         match command {
             Command::Exec(cmd) | Command::ExecAlways(cmd) => {
-                self.spawn_command(&cmd);
+                Self::spawn_command(&cmd);
             },
             Command::Kill => {
                 if let Some(window_id) = self.state.focus.focused_window {
@@ -201,7 +201,7 @@ impl Fluxway {
     }
 
     /// Spawn an external command
-    pub fn spawn_command(&self, cmd: &str) {
+    pub fn spawn_command(cmd: &str) {
         info!("Spawning command: {}", cmd);
         if let Err(e) = ProcessCommand::new("sh").arg("-c").arg(cmd).spawn() {
             error!("Failed to spawn command '{}': {}", cmd, e);
@@ -209,34 +209,31 @@ impl Fluxway {
     }
 
     /// Handle focus command
-    fn handle_focus(&mut self, target: FocusTarget) {
+    #[allow(clippy::unused_self)] // Will use self when focus navigation is implemented
+    fn handle_focus(&self, target: FocusTarget) {
         debug!("Focus target: {:?}", target);
         // TODO: Implement focus navigation using layout tree
         match target {
-            FocusTarget::Left | FocusTarget::Right | FocusTarget::Up | FocusTarget::Down => {
-                // Navigate in direction
-            },
-            FocusTarget::Parent => {
-                // Focus parent container
-            },
-            FocusTarget::Child => {
-                // Focus child
-            },
-            FocusTarget::ModeToggle => {
-                // Toggle focus mode (floating/tiling)
-            },
             FocusTarget::Output(name) => {
                 debug!("Focus output: {}", name);
             },
-            FocusTarget::Workspace => {
-                // Focus workspace
+            // All directional/structural focus targets use the same placeholder
+            FocusTarget::Left
+            | FocusTarget::Right
+            | FocusTarget::Up
+            | FocusTarget::Down
+            | FocusTarget::Parent
+            | FocusTarget::Child
+            | FocusTarget::ModeToggle
+            | FocusTarget::Workspace => {
+                // Navigate based on target direction/type
             },
         }
     }
 
     /// Handle move command
-    fn handle_move(&mut self, target: MoveTarget) {
-        debug!("Move target: {:?}", target);
+    #[allow(clippy::unused_self)] // Will use self when movement is implemented
+    fn handle_move(&self, _target: MoveTarget) {
         // TODO: Implement window movement
     }
 
@@ -291,20 +288,20 @@ impl Fluxway {
     }
 
     /// Handle split command
-    fn handle_split(&mut self, cmd: SplitCmd) {
-        debug!("Split command: {:?}", cmd);
+    #[allow(clippy::unused_self)] // Will use self when container splitting is implemented
+    fn handle_split(&self, _cmd: SplitCmd) {
         // TODO: Set split direction for current container
     }
 
     /// Handle layout command
-    fn handle_layout(&mut self, cmd: LayoutCmd) {
-        debug!("Layout command: {:?}", cmd);
+    #[allow(clippy::unused_self)] // Will use self when layout mode is implemented
+    fn handle_layout(&self, _cmd: LayoutCmd) {
         // TODO: Set layout mode for current container
     }
 
     /// Handle resize command
-    fn handle_resize(&mut self, direction: ResizeDirection, amount: i32) {
-        debug!("Resize: {:?} by {}", direction, amount);
+    #[allow(clippy::unused_self)] // Will use self when resizing is implemented
+    fn handle_resize(&self, _direction: ResizeDirection, _amount: i32) {
         // TODO: Implement window/container resizing
     }
 
@@ -314,16 +311,16 @@ impl Fluxway {
 
         let workspace_id = match target {
             WorkspaceTarget::Next | WorkspaceTarget::NextOnOutput => {
-                let keys: Vec<_> = self.state.workspaces.keys().cloned().collect();
+                let keys: Vec<_> = self.state.workspaces.keys().copied().collect();
                 if let Some(current) = self.state.focus.focused_workspace {
                     let idx = keys.iter().position(|&id| id == current).unwrap_or(0);
-                    keys.get((idx + 1) % keys.len()).cloned()
+                    keys.get((idx + 1) % keys.len()).copied()
                 } else {
-                    keys.first().cloned()
+                    keys.first().copied()
                 }
             },
             WorkspaceTarget::Prev | WorkspaceTarget::PrevOnOutput => {
-                let keys: Vec<_> = self.state.workspaces.keys().cloned().collect();
+                let keys: Vec<_> = self.state.workspaces.keys().copied().collect();
                 if let Some(current) = self.state.focus.focused_workspace {
                     let idx = keys.iter().position(|&id| id == current).unwrap_or(0);
                     let new_idx = if idx == 0 {
@@ -331,9 +328,9 @@ impl Fluxway {
                     } else {
                         idx - 1
                     };
-                    keys.get(new_idx).cloned()
+                    keys.get(new_idx).copied()
                 } else {
-                    keys.last().cloned()
+                    keys.last().copied()
                 }
             },
             WorkspaceTarget::Number(num) => self
@@ -341,7 +338,7 @@ impl Fluxway {
                 .workspaces
                 .keys()
                 .nth((num as usize).saturating_sub(1))
-                .cloned(),
+                .copied(),
             WorkspaceTarget::Name(ref name) => self
                 .state
                 .workspaces
@@ -372,7 +369,7 @@ impl Fluxway {
                 .workspaces
                 .keys()
                 .nth((num as usize).saturating_sub(1))
-                .cloned(),
+                .copied(),
             WorkspaceTarget::Name(ref name) => self
                 .state
                 .workspaces
@@ -438,7 +435,7 @@ impl Fluxway {
         // Convert raw keycode to KeyCode (simplified - would need proper mapping)
         // For now, just check bindings directly
         if pressed {
-            let command = self.input_manager.key_pressed_raw(keycode).cloned();
+            let command = self.input_manager.key_pressed_raw(keycode).copied();
             if let Some(cmd) = command {
                 self.handle_command(cmd);
                 return true;
@@ -575,11 +572,11 @@ pub fn run_winit(config: Config) -> Result<()> {
     info!("Note: Full Wayland compositor implementation requires Smithay API compatibility");
     info!("This is a development build - core window management logic is implemented");
 
-    let mut fluxway = Fluxway::new(config.clone());
+    let _fluxway = Fluxway::new(config.clone());
 
     // Run startup commands
     for startup in &config.startup {
-        fluxway.spawn_command(&startup.command);
+        Fluxway::spawn_command(&startup.command);
     }
 
     info!("Fluxway initialized successfully");

@@ -25,32 +25,32 @@ bitflags! {
     /// Keyboard modifiers
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
     pub struct Modifiers: u8 {
-        const SHIFT = 0b00000001;
-        const CTRL = 0b00000010;
-        const ALT = 0b00000100;
-        const SUPER = 0b00001000;
-        const CAPS_LOCK = 0b00010000;
-        const NUM_LOCK = 0b00100000;
+        const SHIFT     = 0b0000_0001;
+        const CTRL      = 0b0000_0010;
+        const ALT       = 0b0000_0100;
+        const SUPER     = 0b0000_1000;
+        const CAPS_LOCK = 0b0001_0000;
+        const NUM_LOCK  = 0b0010_0000;
     }
 }
 
 impl Modifiers {
     /// Parse modifiers from a string like "Mod4+Shift"
-    pub fn from_str_list(s: &str) -> Result<Self, InputError> {
-        let mut mods = Modifiers::empty();
+    pub fn from_str_list(s: &str) -> Self {
+        let mut mods = Self::empty();
 
         for part in s.split('+') {
             let part = part.trim().to_lowercase();
             match part.as_str() {
-                "shift" => mods.insert(Modifiers::SHIFT),
-                "ctrl" | "control" => mods.insert(Modifiers::CTRL),
-                "alt" | "mod1" => mods.insert(Modifiers::ALT),
-                "super" | "mod4" | "logo" | "win" => mods.insert(Modifiers::SUPER),
+                "shift" => mods.insert(Self::SHIFT),
+                "ctrl" | "control" => mods.insert(Self::CTRL),
+                "alt" | "mod1" => mods.insert(Self::ALT),
+                "super" | "mod4" | "logo" | "win" => mods.insert(Self::SUPER),
                 _ => {}, // Ignore unknown, might be key
             }
         }
 
-        Ok(mods)
+        mods
     }
 }
 
@@ -191,7 +191,7 @@ pub enum KeyCode {
 }
 
 impl KeyCode {
-    /// Parse a key name to KeyCode
+    /// Parse a key name to `KeyCode`
     pub fn from_name(name: &str) -> Result<Self, InputError> {
         let name_lower = name.to_lowercase();
 
@@ -336,14 +336,14 @@ impl MouseButton {
 }
 
 /// A key binding (modifiers + key)
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct KeyBinding {
     pub modifiers: Modifiers,
     pub key: KeyCode,
 }
 
 impl KeyBinding {
-    pub fn new(modifiers: Modifiers, key: KeyCode) -> Self {
+    pub const fn new(modifiers: Modifiers, key: KeyCode) -> Self {
         Self { modifiers, key }
     }
 
@@ -472,7 +472,7 @@ pub enum Command {
     Unknown(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Toggle {
     Enable,
     Disable,
@@ -504,7 +504,7 @@ pub enum MoveTarget {
     Output(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResizeDirection {
     Width(ResizeOp),
     Height(ResizeOp),
@@ -514,14 +514,14 @@ pub enum ResizeDirection {
     Down,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResizeOp {
     Grow,
     Shrink,
     Set,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SplitCmd {
     Horizontal,
     Vertical,
@@ -529,7 +529,7 @@ pub enum SplitCmd {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LayoutCmd {
     Default,
     Tabbed,
@@ -587,150 +587,150 @@ impl Command {
         let args = parts.get(1).map(|s| s.trim()).unwrap_or("");
 
         match cmd.as_str() {
-            "exec" => Command::Exec(args.to_string()),
-            "exec_always" => Command::ExecAlways(args.to_string()),
+            "exec" => Self::Exec(args.to_string()),
+            "exec_always" => Self::ExecAlways(args.to_string()),
 
-            "kill" => Command::Kill,
+            "kill" => Self::Kill,
 
             "focus" => match args.to_lowercase().as_str() {
-                "left" => Command::Focus(FocusTarget::Left),
-                "right" => Command::Focus(FocusTarget::Right),
-                "up" => Command::Focus(FocusTarget::Up),
-                "down" => Command::Focus(FocusTarget::Down),
-                "parent" => Command::Focus(FocusTarget::Parent),
-                "child" => Command::Focus(FocusTarget::Child),
-                "mode_toggle" => Command::Focus(FocusTarget::ModeToggle),
-                _ => Command::Unknown(s.to_string()),
+                "left" => Self::Focus(FocusTarget::Left),
+                "right" => Self::Focus(FocusTarget::Right),
+                "up" => Self::Focus(FocusTarget::Up),
+                "down" => Self::Focus(FocusTarget::Down),
+                "parent" => Self::Focus(FocusTarget::Parent),
+                "child" => Self::Focus(FocusTarget::Child),
+                "mode_toggle" => Self::Focus(FocusTarget::ModeToggle),
+                _ => Self::Unknown(s.to_string()),
             },
 
             "move" => Self::parse_move(args),
 
             "floating" => match args.to_lowercase().as_str() {
-                "enable" => Command::Floating(Toggle::Enable),
-                "disable" => Command::Floating(Toggle::Disable),
-                "toggle" | "" => Command::Floating(Toggle::Switch),
-                _ => Command::Unknown(s.to_string()),
+                "enable" => Self::Floating(Toggle::Enable),
+                "disable" => Self::Floating(Toggle::Disable),
+                "toggle" | "" => Self::Floating(Toggle::Switch),
+                _ => Self::Unknown(s.to_string()),
             },
 
             "fullscreen" => match args.to_lowercase().as_str() {
-                "enable" => Command::Fullscreen(Toggle::Enable),
-                "disable" => Command::Fullscreen(Toggle::Disable),
-                "toggle" | "" => Command::Fullscreen(Toggle::Switch),
-                _ => Command::Unknown(s.to_string()),
+                "enable" => Self::Fullscreen(Toggle::Enable),
+                "disable" => Self::Fullscreen(Toggle::Disable),
+                "toggle" | "" => Self::Fullscreen(Toggle::Switch),
+                _ => Self::Unknown(s.to_string()),
             },
 
             "split" => match args.to_lowercase().as_str() {
-                "horizontal" | "h" => Command::Split(SplitCmd::Horizontal),
-                "vertical" | "v" => Command::Split(SplitCmd::Vertical),
-                "toggle" | "t" => Command::Split(SplitCmd::Toggle),
-                "none" | "n" => Command::Split(SplitCmd::None),
-                _ => Command::Unknown(s.to_string()),
+                "horizontal" | "h" => Self::Split(SplitCmd::Horizontal),
+                "vertical" | "v" => Self::Split(SplitCmd::Vertical),
+                "toggle" | "t" => Self::Split(SplitCmd::Toggle),
+                "none" | "n" => Self::Split(SplitCmd::None),
+                _ => Self::Unknown(s.to_string()),
             },
 
             "layout" => match args.to_lowercase().as_str() {
-                "default" => Command::Layout(LayoutCmd::Default),
-                "tabbed" => Command::Layout(LayoutCmd::Tabbed),
-                "stacked" | "stacking" => Command::Layout(LayoutCmd::Stacked),
-                "splitv" => Command::Layout(LayoutCmd::SplitV),
-                "splith" => Command::Layout(LayoutCmd::SplitH),
-                "toggle" => Command::Layout(LayoutCmd::Toggle),
-                "toggle split" => Command::Layout(LayoutCmd::ToggleSplit),
-                "toggle all" => Command::Layout(LayoutCmd::ToggleAll),
-                _ => Command::Unknown(s.to_string()),
+                "default" => Self::Layout(LayoutCmd::Default),
+                "tabbed" => Self::Layout(LayoutCmd::Tabbed),
+                "stacked" | "stacking" => Self::Layout(LayoutCmd::Stacked),
+                "splitv" => Self::Layout(LayoutCmd::SplitV),
+                "splith" => Self::Layout(LayoutCmd::SplitH),
+                "toggle" => Self::Layout(LayoutCmd::Toggle),
+                "toggle split" => Self::Layout(LayoutCmd::ToggleSplit),
+                "toggle all" => Self::Layout(LayoutCmd::ToggleAll),
+                _ => Self::Unknown(s.to_string()),
             },
 
             "workspace" => match args.to_lowercase().as_str() {
-                "next" => Command::Workspace(WorkspaceTarget::Next),
-                "prev" | "previous" => Command::Workspace(WorkspaceTarget::Prev),
-                "next_on_output" => Command::Workspace(WorkspaceTarget::NextOnOutput),
-                "prev_on_output" => Command::Workspace(WorkspaceTarget::PrevOnOutput),
-                "back_and_forth" => Command::Workspace(WorkspaceTarget::BackAndForth),
+                "next" => Self::Workspace(WorkspaceTarget::Next),
+                "prev" | "previous" => Self::Workspace(WorkspaceTarget::Prev),
+                "next_on_output" => Self::Workspace(WorkspaceTarget::NextOnOutput),
+                "prev_on_output" => Self::Workspace(WorkspaceTarget::PrevOnOutput),
+                "back_and_forth" => Self::Workspace(WorkspaceTarget::BackAndForth),
                 _ => {
                     if let Ok(num) = args.parse::<u32>() {
-                        Command::Workspace(WorkspaceTarget::Number(num))
+                        Self::Workspace(WorkspaceTarget::Number(num))
                     } else {
-                        Command::Workspace(WorkspaceTarget::Name(args.to_string()))
+                        Self::Workspace(WorkspaceTarget::Name(args.to_string()))
                     }
                 },
             },
 
             "scratchpad" => match args.to_lowercase().as_str() {
-                "show" => Command::ScratchpadShow,
-                _ => Command::Unknown(s.to_string()),
+                "show" => Self::ScratchpadShow,
+                _ => Self::Unknown(s.to_string()),
             },
 
-            "mark" => Command::Mark(args.to_string()),
-            "unmark" => Command::Unmark(if args.is_empty() {
+            "mark" => Self::Mark(args.to_string()),
+            "unmark" => Self::Unmark(if args.is_empty() {
                 None
             } else {
                 Some(args.to_string())
             }),
 
-            "mode" => Command::Mode(args.to_string()),
+            "mode" => Self::Mode(args.to_string()),
 
-            "reload" => Command::Reload,
-            "restart" => Command::Restart,
-            "exit" => Command::Exit,
+            "reload" => Self::Reload,
+            "restart" => Self::Restart,
+            "exit" => Self::Exit,
 
             "resize" => Self::parse_resize(args),
 
-            _ => Command::Unknown(s.to_string()),
+            _ => Self::Unknown(s.to_string()),
         }
     }
 
-    fn parse_move(args: &str) -> Command {
+    fn parse_move(args: &str) -> Self {
         let parts: Vec<&str> = args.split_whitespace().collect();
 
         if parts.is_empty() {
-            return Command::Unknown(format!("move {}", args));
+            return Self::Unknown(format!("move {args}"));
         }
 
         match parts[0].to_lowercase().as_str() {
-            "left" => Command::Move(MoveTarget::Left),
-            "right" => Command::Move(MoveTarget::Right),
-            "up" => Command::Move(MoveTarget::Up),
-            "down" => Command::Move(MoveTarget::Down),
-            "center" => Command::Move(MoveTarget::Center),
-            "scratchpad" => Command::MoveToScratchpad,
+            "left" => Self::Move(MoveTarget::Left),
+            "right" => Self::Move(MoveTarget::Right),
+            "up" => Self::Move(MoveTarget::Up),
+            "down" => Self::Move(MoveTarget::Down),
+            "center" => Self::Move(MoveTarget::Center),
+            "scratchpad" => Self::MoveToScratchpad,
             "container" | "window" => {
                 if parts.len() >= 4 && parts[1] == "to" && parts[2] == "workspace" {
                     let ws = parts[3..].join(" ");
                     if let Ok(num) = ws.parse::<u32>() {
-                        Command::MoveToWorkspace(WorkspaceTarget::Number(num))
+                        Self::MoveToWorkspace(WorkspaceTarget::Number(num))
                     } else {
-                        Command::MoveToWorkspace(WorkspaceTarget::Name(ws))
+                        Self::MoveToWorkspace(WorkspaceTarget::Name(ws))
                     }
                 } else {
-                    Command::Unknown(format!("move {}", args))
+                    Self::Unknown(format!("move {args}"))
                 }
             },
             "position" => {
                 if parts.len() >= 3 {
                     if let (Ok(x), Ok(y)) = (parts[1].parse::<i32>(), parts[2].parse::<i32>()) {
-                        Command::Move(MoveTarget::Position(x, y))
+                        Self::Move(MoveTarget::Position(x, y))
                     } else {
-                        Command::Unknown(format!("move {}", args))
+                        Self::Unknown(format!("move {args}"))
                     }
                 } else {
-                    Command::Unknown(format!("move {}", args))
+                    Self::Unknown(format!("move {args}"))
                 }
             },
-            _ => Command::Unknown(format!("move {}", args)),
+            _ => Self::Unknown(format!("move {args}")),
         }
     }
 
-    fn parse_resize(args: &str) -> Command {
+    fn parse_resize(args: &str) -> Self {
         let parts: Vec<&str> = args.split_whitespace().collect();
 
         if parts.len() < 2 {
-            return Command::Unknown(format!("resize {}", args));
+            return Self::Unknown(format!("resize {args}"));
         }
 
         let op = match parts[0].to_lowercase().as_str() {
             "grow" => ResizeOp::Grow,
             "shrink" => ResizeOp::Shrink,
             "set" => ResizeOp::Set,
-            _ => return Command::Unknown(format!("resize {}", args)),
+            _ => return Self::Unknown(format!("resize {args}")),
         };
 
         let direction = match parts[1].to_lowercase().as_str() {
@@ -740,7 +740,7 @@ impl Command {
             "right" => ResizeDirection::Right,
             "up" => ResizeDirection::Up,
             "down" => ResizeDirection::Down,
-            _ => return Command::Unknown(format!("resize {}", args)),
+            _ => return Self::Unknown(format!("resize {args}")),
         };
 
         let amount = if parts.len() >= 3 {
@@ -749,7 +749,7 @@ impl Command {
             10
         };
 
-        Command::Resize(direction, amount)
+        Self::Resize(direction, amount)
     }
 }
 
@@ -962,21 +962,18 @@ mod tests {
     #[test]
     fn test_command_parse() {
         let cmd = Command::parse("exec alacritty");
-        assert!(matches!(cmd, Command::Exec(s) if s == "alacritty"));
+        assert!(matches!(cmd, Self::Exec(s) if s == "alacritty"));
 
         let cmd = Command::parse("focus left");
-        assert!(matches!(cmd, Command::Focus(FocusTarget::Left)));
+        assert!(matches!(cmd, Self::Focus(FocusTarget::Left)));
 
         let cmd = Command::parse("workspace 3");
-        assert!(matches!(
-            cmd,
-            Command::Workspace(WorkspaceTarget::Number(3))
-        ));
+        assert!(matches!(cmd, Self::Workspace(WorkspaceTarget::Number(3))));
     }
 
     #[test]
     fn test_modifiers() {
-        let mods = Modifiers::from_str_list("Mod4+Shift").unwrap();
+        let mods = Modifiers::from_str_list("Mod4+Shift");
         assert!(mods.contains(Modifiers::SUPER));
         assert!(mods.contains(Modifiers::SHIFT));
         assert!(!mods.contains(Modifiers::CTRL));

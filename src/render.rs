@@ -172,10 +172,10 @@ impl Color32F {
         };
 
         Some(Self {
-            r: r as f32 / 255.0,
-            g: g as f32 / 255.0,
-            b: b as f32 / 255.0,
-            a: a as f32 / 255.0,
+            r: f32::from(r) / 255.0,
+            g: f32::from(g) / 255.0,
+            b: f32::from(b) / 255.0,
+            a: f32::from(a) / 255.0,
         })
     }
 
@@ -379,7 +379,7 @@ pub enum EasingCurve {
 
 impl EasingCurve {
     /// Apply easing to t in [0, 1]
-    pub fn apply(&self, t: f64) -> f64 {
+    pub fn apply(self, t: f64) -> f64 {
         match self {
             Self::Linear => t,
             Self::EaseOutCubic => 1.0 - (1.0 - t).powi(3),
@@ -678,7 +678,7 @@ impl Wallpaper {
         }
     }
 
-    /// Get color as Color32F
+    /// Get color as `Color32F`
     pub fn as_color32f(&self) -> Color32F {
         Color32F::from_hex(&self.color).unwrap_or(Color32F::BLACK)
     }
@@ -693,7 +693,7 @@ pub struct FrameScheduler {
     target_duration: Duration,
     /// Last frame time
     pub last_frame: Instant,
-    /// Whether VSync is enabled
+    /// Whether `VSync` is enabled
     pub vsync: bool,
     /// Accumulated time
     accumulated: Duration,
@@ -822,7 +822,7 @@ mod tests {
 
     #[test]
     fn test_frame_scheduler() {
-        let mut scheduler = FrameScheduler::new(60, false);
+        let scheduler = FrameScheduler::new(60, false);
         assert!(scheduler.time_to_next_frame() > Duration::ZERO);
     }
 

@@ -52,7 +52,7 @@ pub enum MessageType {
 }
 
 impl MessageType {
-    pub fn from_u32(value: u32) -> Option<Self> {
+    pub const fn from_u32(value: u32) -> Option<Self> {
         match value {
             0 => Some(Self::RunCommand),
             1 => Some(Self::GetWorkspaces),
@@ -180,7 +180,7 @@ pub struct CommandResult {
 }
 
 impl CommandResult {
-    pub fn success() -> Self {
+    pub const fn success() -> Self {
         Self {
             success: true,
             parse_error: None,
@@ -463,7 +463,7 @@ pub struct IpcHandler {
 }
 
 impl IpcHandler {
-    pub fn new(receiver: Receiver<IpcRequest>) -> Self {
+    pub const fn new(receiver: Receiver<IpcRequest>) -> Self {
         Self { receiver }
     }
 
@@ -489,7 +489,7 @@ impl IpcHandler {
         Self::respond_json(request, MessageType::RunCommand, &value);
     }
 
-    /// Handle get_version request
+    /// Handle `get_version` request
     pub fn handle_version(request: &IpcRequest) {
         let version = VersionInfo {
             major: 0,
@@ -505,12 +505,12 @@ impl IpcHandler {
         );
     }
 
-    /// Handle get_binding_modes request
+    /// Handle `get_binding_modes` request
     pub fn handle_binding_modes(request: &IpcRequest, modes: &[String]) {
         Self::respond_json(request, MessageType::GetBindingModes, &json!(modes));
     }
 
-    /// Handle get_marks request
+    /// Handle `get_marks` request
     pub fn handle_marks(request: &IpcRequest, marks: &[String]) {
         Self::respond_json(request, MessageType::GetMarks, &json!(marks));
     }

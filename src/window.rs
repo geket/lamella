@@ -17,27 +17,27 @@ bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
     pub struct WindowState: u32 {
         /// Window is currently focused
-        const FOCUSED = 0b00000001;
+        const FOCUSED    = 0b0000_0000_0001;
         /// Window is fullscreen
-        const FULLSCREEN = 0b00000010;
+        const FULLSCREEN = 0b0000_0000_0010;
         /// Window is maximized
-        const MAXIMIZED = 0b00000100;
+        const MAXIMIZED  = 0b0000_0000_0100;
         /// Window is minimized/hidden
-        const HIDDEN = 0b00001000;
+        const HIDDEN     = 0b0000_0000_1000;
         /// Window is floating (not tiled)
-        const FLOATING = 0b00010000;
+        const FLOATING   = 0b0000_0001_0000;
         /// Window is sticky (visible on all workspaces)
-        const STICKY = 0b00100000;
+        const STICKY     = 0b0000_0010_0000;
         /// Window is urgent (demands attention)
-        const URGENT = 0b01000000;
+        const URGENT     = 0b0000_0100_0000;
         /// Window is being moved
-        const MOVING = 0b10000000;
+        const MOVING     = 0b0000_1000_0000;
         /// Window is being resized
-        const RESIZING = 0b100000000;
+        const RESIZING   = 0b0001_0000_0000;
         /// Window is a dialog
-        const DIALOG = 0b1000000000;
+        const DIALOG     = 0b0010_0000_0000;
         /// Window is a modal
-        const MODAL = 0b10000000000;
+        const MODAL      = 0b0100_0000_0000;
     }
 }
 
@@ -153,10 +153,10 @@ pub struct Window {
     /// Window title
     pub title: String,
 
-    /// Application ID (app_id in Wayland, WM_CLASS in X11)
+    /// Application ID (`app_id` in Wayland, `WM_CLASS` in X11)
     pub app_id: String,
 
-    /// Window class (WM_CLASS instance)
+    /// Window class (`WM_CLASS` instance)
     pub class: String,
 
     /// Current geometry
@@ -236,7 +236,7 @@ impl Window {
     }
 
     /// Check if window should be floating by default
-    pub fn should_float(&self) -> bool {
+    pub const fn should_float(&self) -> bool {
         matches!(
             self.window_type,
             WindowType::Dialog
@@ -300,17 +300,17 @@ impl Window {
     }
 
     /// Check if window is visible
-    pub fn is_visible(&self) -> bool {
+    pub const fn is_visible(&self) -> bool {
         !self.state.contains(WindowState::HIDDEN)
     }
 
     /// Check if window is tiled (not floating)
-    pub fn is_tiled(&self) -> bool {
+    pub const fn is_tiled(&self) -> bool {
         !self.state.contains(WindowState::FLOATING) && !self.state.contains(WindowState::FULLSCREEN)
     }
 
     /// Check if window is focused
-    pub fn is_focused(&self) -> bool {
+    pub const fn is_focused(&self) -> bool {
         self.state.contains(WindowState::FOCUSED)
     }
 
@@ -343,7 +343,7 @@ impl Window {
     }
 
     /// Get effective border width
-    pub fn border_width(&self) -> u32 {
+    pub const fn border_width(&self) -> u32 {
         if self.state.contains(WindowState::FULLSCREEN) {
             return 0;
         }

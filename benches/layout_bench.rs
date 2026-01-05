@@ -3,6 +3,9 @@
 //! These benchmarks measure the performance of the tiling layout engine,
 //! which is critical for window manager responsiveness.
 
+// Benchmarks may use single-char names for geometry and explicit casts.
+#![allow(clippy::many_single_char_names)]
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 // Note: Full benchmarks would require importing from the crate
@@ -12,7 +15,7 @@ fn layout_calculation_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("layout");
 
     // Benchmark different numbers of windows
-    for num_windows in [1, 5, 10, 20, 50, 100].iter() {
+    for num_windows in &[1, 5, 10, 20, 50, 100] {
         group.bench_with_input(
             BenchmarkId::new("calculate_tiling", num_windows),
             num_windows,
@@ -51,7 +54,7 @@ fn container_operations_benchmark(c: &mut Criterion) {
 fn focus_traversal_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("focus");
 
-    for depth in [2, 4, 8, 16].iter() {
+    for depth in &[2, 4, 8, 16] {
         group.bench_with_input(
             BenchmarkId::new("find_window_in_tree", depth),
             depth,

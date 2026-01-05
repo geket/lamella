@@ -70,7 +70,7 @@ pub fn detect_session_type() -> SessionType {
     } else if is_x11_session() {
         SessionType::X11
     } else {
-        SessionType::TTY
+        SessionType::Tty
     }
 }
 
@@ -79,7 +79,7 @@ pub fn detect_session_type() -> SessionType {
 pub enum SessionType {
     Wayland,
     X11,
-    TTY,
+    Tty,
 }
 
 impl std::fmt::Display for SessionType {
@@ -87,15 +87,16 @@ impl std::fmt::Display for SessionType {
         match self {
             Self::Wayland => write!(f, "Wayland"),
             Self::X11 => write!(f, "X11"),
-            Self::TTY => write!(f, "TTY"),
+            Self::Tty => write!(f, "TTY"),
         }
     }
 }
 
 #[cfg(feature = "x11")]
 pub mod x11_backend {
-    use super::*;
+    use super::{BackendError, BackendType, DisplayBackend};
 
+    #[derive(Default)]
     pub struct X11Backend {
         _placeholder: (),
     }
@@ -103,12 +104,6 @@ pub mod x11_backend {
     impl X11Backend {
         pub fn new() -> Result<Self, BackendError> {
             Ok(Self { _placeholder: () })
-        }
-    }
-
-    impl Default for X11Backend {
-        fn default() -> Self {
-            Self { _placeholder: () }
         }
     }
 
@@ -136,7 +131,7 @@ pub mod x11_backend {
 
 #[cfg(feature = "xwayland")]
 pub mod xwayland_bridge {
-    use super::*;
+    use super::BackendError;
 
     pub struct XWaylandBridge {
         _process: Option<std::process::Child>,
@@ -144,7 +139,7 @@ pub mod xwayland_bridge {
     }
 
     impl XWaylandBridge {
-        pub fn new() -> Self {
+        pub const fn new() -> Self {
             Self {
                 _process: None,
                 display_number: None,
@@ -153,27 +148,26 @@ pub mod xwayland_bridge {
 
         pub fn start(&mut self) -> Result<(), BackendError> {
             tracing::info!("Starting XWayland server");
-            let display_num = self.find_free_display()?;
+            let display_num = Self::find_free_display()?;
             self.display_number = Some(display_num);
             Ok(())
         }
 
-        pub fn stop(&mut self) -> Result<(), BackendError> {
+        pub fn stop(&mut self) {
             if let Some(ref mut process) = self._process {
                 let _ = process.kill();
             }
             self._process = None;
             self.display_number = None;
-            Ok(())
         }
 
         pub fn display(&self) -> Option<String> {
-            self.display_number.map(|n| format!(":{}", n))
+            self.display_number.map(|n| format!(":{n}"))
         }
 
-        fn find_free_display(&self) -> Result<u32, BackendError> {
+        fn find_free_display() -> Result<u32, BackendError> {
             for i in 0..64 {
-                let socket_path = format!("/tmp/.X11-unix/X{}", i);
+                let socket_path = format!("/tmp/.X11-unix/X{i}");
                 if !std::path::Path::new(&socket_path).exists() {
                     return Ok(i);
                 }
@@ -196,7 +190,7 @@ mod tests {
     #[test]
     fn test_session_detection() {
         let session = detect_session_type();
-        println!("Detected session type: {}", session);
+        println!("Detected session type: {session}");
     }
 
     #[test]
