@@ -1,12 +1,51 @@
-[package]
-name = "fluxway"
+[workspace]
+members = [
+    "crates/fluxway-core",
+    "crates/fluxway-backend-winit",
+]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
 authors = ["Fluxway Contributors"]
-description = "A lightweight, highly scalable tiling window manager combining the best of i3, Sway, and Fluxbox"
 license = "MIT"
 repository = "https://github.com/geket/lamella"
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+missing_docs = "allow"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+
+# Window Manager / Compositor Specific Allows
+module_name_repetitions = "allow"
+too_many_lines = "allow"
+similar_names = "allow"
+struct_excessive_bools = "allow"
+
+# Numeric casts - compositor geometry requires explicit truncation in hot paths.
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_sign_loss = "allow"
+
+# Multiple crate versions - transitive deps from smithay/wayland ecosystem.
+multiple_crate_versions = "allow"
+
+[package]
+name = "fluxway"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "A lightweight, highly scalable tiling window manager combining the best of i3, Sway, and Fluxbox"
+license.workspace = true
+repository.workspace = true
 keywords = ["wayland", "window-manager", "tiling", "compositor", "x11"]
 categories = ["gui"]
 readme = "README.md"
@@ -20,85 +59,30 @@ exclude = [
 
 [features]
 default = ["wayland", "xwayland", "ipc"]
-# Wayland compositor support (primary)
 wayland = []
-# XWayland bridge for X11 apps in Wayland
 xwayland = ["dep:x11rb"]
-# Native X11 window manager mode (backwards compatibility)
 x11 = ["dep:x11rb", "dep:xcb", "dep:x11"]
-# IPC server for external control (i3-compatible)
 ipc = []
-# Multi-output workspace management
-multi-output = []
-# Animation support
+multi-output = ["fluxway-core/multi-output"]
 animations = []
-# All features enabled
 full = ["wayland", "xwayland", "x11", "ipc", "multi-output", "animations"]
 
-[lints.rust]
-unsafe_code = "warn"
-missing_docs = "allow"
-
-[lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-nursery = { level = "warn", priority = -1 }
-cargo = { level = "warn", priority = -1 }
-
-# =============================================================================
-# Window Manager / Compositor Specific Allows
-# =============================================================================
-# These patterns are intentional and correct for compositor development.
-# See: Fluxway Lint Remediation Guide
-
-# Structural patterns common in window managers
-module_name_repetitions = "allow"
-too_many_lines = "allow"
-similar_names = "allow"
-struct_excessive_bools = "allow"
-
-# Numeric casts - compositor geometry requires explicit truncation in hot paths.
-# These are allowed at crate level but should be audited per-function.
-# Pointer motion, resize handlers, and frame rendering legitimately truncate.
-cast_possible_truncation = "allow"
-cast_possible_wrap = "allow"
-cast_sign_loss = "allow"
-
-# Multiple crate versions - transitive deps from smithay/wayland ecosystem.
-# Tracked for future unification but not blocking.
-multiple_crate_versions = "allow"
+[lints]
+workspace = true
 
 [dependencies]
-# Wayland compositor framework
-smithay = { version = "0.3", default-features = false, features = [
-    "backend_drm",
-    "backend_libinput", 
-    "backend_udev",
-    "backend_session_libseat",
-    "backend_winit",
-    "renderer_gl",
-    "wayland_frontend",
-    "xwayland",
-] }
+fluxway-core = { path = "crates/fluxway-core" }
+fluxway-backend-winit = { path = "crates/fluxway-backend-winit" }
 
 # Async runtime and event loop (matching smithay 0.3's calloop version)
 calloop = "0.9"
-
-# Serialization for config and IPC
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-toml = "0.7"
 
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Error handling
-thiserror = "1.0"
 anyhow = "1.0"
-
-# IPC
-interprocess = "1.2"
 
 # CLI
 clap = { version = "4.3", features = ["derive"] }
@@ -107,28 +91,6 @@ clap = { version = "4.3", features = ["derive"] }
 x11rb = { version = "0.12", optional = true, features = ["composite", "randr", "render", "shape", "xfixes", "xinput"] }
 xcb = { version = "1.3", optional = true }
 x11 = { version = "2.21", optional = true }
-
-# Input handling
-xkbcommon = "0.4"
-input = "0.6"
-
-# Image handling for wallpapers
-image = "0.24"
-
-# Directory and file utilities
-dirs = "5.0"
-
-# Bitflags for modifier keys
-bitflags = "2.4"
-
-# Indexmap for ordered hashmaps
-indexmap = { version = "2.1", features = ["serde"] }
-
-# UUID for window/container identification
-uuid = { version = "1.6", features = ["v4", "serde"] }
-
-# Regex for window matching
-regex = "1.10"
 
 [dev-dependencies]
 criterion = "0.4"

@@ -1,42 +1,21 @@
-//! Fluxway - A lightweight, highly scalable tiling window manager
+//! Fluxway — A lightweight, highly scalable tiling window manager
 //!
-//! Combines the best features of i3, Sway, and Fluxbox into a modern
-//! Wayland-native compositor with excellent performance and usability.
+//! This binary is a thin shell that:
+//! - Parses CLI arguments
+//! - Loads configuration via `fluxway-core`
+//! - Selects and starts a backend from `fluxway-backend-winit`
 //!
-//! # Features
-//! - Tree-based tiling (i3-style) with split containers
-//! - Tabbed and stacked layouts (Fluxbox-inspired)
-//! - Full floating window support with mouse interactions
-//! - Workspace management with named workspaces
-//! - i3-compatible IPC protocol for tooling integration
-//! - TOML configuration with runtime reload
-//! - GPU-accelerated rendering via Smithay
-//! - XWayland support (optional)
-//! - Scratchpad for hidden floating windows
-//! - Window marks (vim-style named references)
-//! - Comprehensive keybinding system with modes
+//! All window-manager logic lives in `fluxway-core`.
+//! All protocol/display logic lives in `fluxway-backend-winit`.
 
 use anyhow::Result;
 use clap::Parser;
 use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
-mod compositor;
-mod config;
-mod input;
-#[cfg(feature = "ipc")]
-mod ipc;
-mod layout;
-mod render;
-mod state;
-mod window;
-mod workspace;
-mod x11_compat;
+use fluxway_core::config::Config;
 
-use config::Config;
-use x11_compat::{detect_session_type, SessionType};
-
-/// Fluxway - A modern tiling window manager
+/// Fluxway — A modern tiling window manager
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -64,7 +43,7 @@ struct Args {
     #[arg(long)]
     nested: bool,
 
-    /// Run headless integration test (exercises input→command→state→layout pipeline)
+    /// Run headless integration test
     #[arg(long)]
     headless: bool,
 
@@ -100,16 +79,16 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Load configuration
+    // Load configuration (via core — no protocol deps)
     let config = match Config::load(args.config.as_deref()) {
         Ok(cfg) => {
             info!("Configuration loaded successfully");
             cfg
-        },
+        }
         Err(e) => {
             warn!("Failed to load config: {}, using defaults", e);
             Config::default()
-        },
+        }
     };
 
     if args.validate {
@@ -117,60 +96,24 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Headless integration test mode
+    // Headless integration test
     if args.headless {
         info!("Running headless integration test");
-        return match compositor::run_headless_test(config) {
+        return match fluxway_backend_winit::run_headless_test(config) {
             Ok(true) => {
                 info!("Headless test PASSED: pipeline exercised successfully");
                 Ok(())
-            },
+            }
             Ok(false) => {
                 anyhow::bail!("Headless test FAILED: state did not change as expected");
-            },
+            }
             Err(e) => {
                 anyhow::bail!("Headless test ERROR: {}", e);
-            },
+            }
         };
     }
 
-    // Detect session type
-    let session_type = detect_session_type();
-    info!("Detected session type: {}", session_type);
-
-    // Determine backend
-    let use_winit = args.nested || args.backend == "winit" || {
-        // Auto-detect: use winit if already in a graphical session
-        matches!(session_type, SessionType::Wayland | SessionType::X11)
-    };
-
-    // Run the compositor
-    match args.backend.as_str() {
-        "x11" => {
-            #[cfg(feature = "x11")]
-            {
-                info!("Using native X11 backend");
-                // X11 backend would be started here
-                warn!("Native X11 backend not yet fully implemented");
-                compositor::run_winit(config)
-            }
-            #[cfg(not(feature = "x11"))]
-            {
-                anyhow::bail!("X11 feature not compiled in. Rebuild with --features x11");
-            }
-        },
-        "drm" => {
-            // DRM backend for production use
-            warn!("DRM backend not yet implemented, falling back to winit");
-            compositor::run_winit(config)
-        },
-        _ if use_winit => {
-            info!("Using winit backend (nested/development mode)");
-            compositor::run_winit(config)
-        },
-        _ => {
-            warn!("No suitable backend detected, using winit");
-            compositor::run_winit(config)
-        },
-    }
+    // Start backend
+    let mut backend = fluxway_backend_winit::WinitBackend::new(config);
+    backend.run()
 }

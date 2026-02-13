@@ -1,0 +1,43 @@
+[package]
+name = "fluxway-backend-winit"
+description = "Winit/Smithay backend adapter for Fluxway"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+fluxway-core = { path = "../fluxway-core" }
+
+# Wayland compositor framework
+smithay = { version = "0.3", default-features = false, features = [
+    "backend_drm",
+    "backend_libinput",
+    "backend_udev",
+    "backend_session_libseat",
+    "backend_winit",
+    "renderer_gl",
+    "wayland_frontend",
+    "xwayland",
+] }
+
+# Async runtime and event loop
+calloop = "0.9"
+
+# Logging
+tracing = "0.1"
+
+# Error handling
+anyhow = "1.0"
+
+# Input handling
+xkbcommon = "0.4"
+input = "0.6"
+
+# Image handling for wallpapers
+image = "0.24"

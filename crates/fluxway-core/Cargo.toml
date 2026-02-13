@@ -1,0 +1,46 @@
+[package]
+name = "fluxway-core"
+description = "Protocol-agnostic window manager core for Fluxway"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = ["ipc"]
+ipc = []
+multi-output = []
+
+[lints]
+workspace = true
+
+[dependencies]
+# Serialization for config and IPC
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.7"
+
+# Logging
+tracing = "0.1"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Bitflags for modifier keys and window state
+bitflags = "2.4"
+
+# Ordered hashmaps
+indexmap = { version = "2.1", features = ["serde"] }
+
+# Regex for window matching
+regex = "1.10"
+
+# Directory utilities (for config file discovery)
+dirs = "5.0"
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+proptest = "1.2"
