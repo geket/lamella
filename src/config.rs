@@ -3,17 +3,15 @@
 //! Provides a flexible configuration system inspired by i3/Sway config
 //! with TOML file format for better maintainability.
 
-use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
-use crate::input::KeyBinding;
-use crate::layout::{LayoutMode, SplitDirection};
-use crate::window::{BorderStyle, DecorationMode, WindowCriteria};
+use crate::layout::LayoutMode;
+use crate::window::{BorderStyle, WindowCriteria};
 
 /// Main configuration structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -140,7 +138,8 @@ impl Config {
             .unwrap_or_else(|_| String::from("# Error generating config"))
     }
 
-    /// Get the socket path
+    /// Get the socket path for IPC
+    #[cfg(feature = "ipc")]
     pub fn socket_path(&self) -> PathBuf {
         if let Some(ref path) = self.general.socket_path {
             PathBuf::from(path)

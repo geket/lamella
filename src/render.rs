@@ -8,8 +8,8 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use smithay::{
-    backend::renderer::{Frame, ImportShm, Renderer, Texture, Transform},
-    utils::{Logical, Physical, Point, Rectangle, Size},
+    backend::renderer::Renderer,
+    utils::{Logical, Physical, Rectangle},
 };
 use uuid::Uuid;
 
@@ -747,13 +747,30 @@ impl Default for FrameScheduler {
 }
 
 /// Render a solid color rectangle
+///
+/// # Stub Implementation
+/// Awaiting Smithay 0.3 renderer integration.
 pub fn render_solid_rect<R: Renderer>(
     renderer: &mut R,
     rect: Rectangle<i32, Physical>,
     color: Color32F,
 ) {
-    // Smithay 0.3 renderer implementation would go here
-    // This is a placeholder for the actual rendering call
+    // TODO(smithay-render): Implement actual rendering
+    // Will use renderer's solid color drawing API once Smithay backend is wired
+    #[cfg(debug_assertions)]
+    {
+        // In debug builds, log that we're calling an unimplemented render function
+        // This makes the stub visible in logs without crashing
+        static WARNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            tracing::warn!(
+                "render_solid_rect called but not implemented - rect={:?} color=({:.2},{:.2},{:.2},{:.2})",
+                rect, color.r, color.g, color.b, color.a
+            );
+        }
+    }
+    // Silence unused warnings - these will be used when implemented
+    let _ = (renderer, rect, color);
 }
 
 /// Render window border

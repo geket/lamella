@@ -24,6 +24,7 @@ use tracing_subscriber::FmtSubscriber;
 mod compositor;
 mod config;
 mod input;
+#[cfg(feature = "ipc")]
 mod ipc;
 mod layout;
 mod render;
@@ -62,6 +63,10 @@ struct Args {
     /// Run in nested mode using winit backend (for testing)
     #[arg(long)]
     nested: bool,
+
+    /// Run headless integration test (exercises input→command→state→layout pipeline)
+    #[arg(long)]
+    headless: bool,
 
     /// Backend to use: auto, winit, or drm
     #[arg(long, default_value = "auto")]
@@ -110,6 +115,23 @@ fn main() -> Result<()> {
     if args.validate {
         info!("Configuration is valid");
         return Ok(());
+    }
+
+    // Headless integration test mode
+    if args.headless {
+        info!("Running headless integration test");
+        return match compositor::run_headless_test(config) {
+            Ok(true) => {
+                info!("Headless test PASSED: pipeline exercised successfully");
+                Ok(())
+            },
+            Ok(false) => {
+                anyhow::bail!("Headless test FAILED: state did not change as expected");
+            },
+            Err(e) => {
+                anyhow::bail!("Headless test ERROR: {}", e);
+            },
+        };
     }
 
     // Detect session type

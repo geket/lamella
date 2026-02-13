@@ -3,7 +3,6 @@
 //! Implements an i3-compatible IPC protocol for external control and
 //! integration with tools like i3status, polybar, etc.
 
-use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
@@ -13,7 +12,7 @@ use std::thread;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 /// IPC message types (i3-compatible)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -367,7 +366,18 @@ pub struct IpcRequest {
     pub response_sender: Sender<IpcMessage>,
 }
 
+// =============================================================================
+// IPC Server/Client Infrastructure
+// =============================================================================
+// These types are complete and tested but not yet wired into the main compositor
+// event loop. Integration requires:
+// 1. Starting IpcServer in run_winit() or run_drm()
+// 2. Polling IpcHandler in the main event loop
+// 3. Routing IPC commands to Fluxway::handle_command()
+// =============================================================================
+
 /// IPC server
+
 pub struct IpcServer {
     socket_path: PathBuf,
     request_sender: Sender<IpcRequest>,
@@ -458,6 +468,7 @@ fn handle_client(mut stream: UnixStream, request_sender: Sender<IpcRequest>) -> 
 }
 
 /// Handle IPC requests
+
 pub struct IpcHandler {
     receiver: Receiver<IpcRequest>,
 }
@@ -516,7 +527,11 @@ impl IpcHandler {
     }
 
     /// Handle subscribe request
-    pub fn handle_subscribe(request: &IpcRequest, events: &[EventType]) -> Vec<EventType> {
+    /// Validates requested events against the supported event types
+    pub fn handle_subscribe(
+        request: &IpcRequest,
+        supported_events: &[EventType],
+    ) -> Vec<EventType> {
         // Parse requested events from payload
         let requested: Vec<String> =
             serde_json::from_str(&request.message.payload).unwrap_or_default();
@@ -524,7 +539,10 @@ impl IpcHandler {
         let mut subscribed = Vec::new();
         for event_name in requested {
             if let Ok(event_type) = serde_json::from_value::<EventType>(json!(event_name)) {
-                subscribed.push(event_type);
+                // Only subscribe to events that are actually supported
+                if supported_events.contains(&event_type) {
+                    subscribed.push(event_type);
+                }
             }
         }
 
@@ -536,6 +554,7 @@ impl IpcHandler {
 }
 
 /// IPC client for sending commands to fluxway
+
 pub struct IpcClient2 {
     socket_path: PathBuf,
 }

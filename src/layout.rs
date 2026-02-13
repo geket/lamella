@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::config::Config;
-use crate::state::{next_id, Geometry};
+use crate::state::Geometry;
 use crate::window::WindowId;
 
 /// Unique identifier for a container
@@ -324,6 +324,14 @@ impl LayoutTree {
 
     /// Split the focused container
     pub fn split(&mut self, direction: SplitDirection, config: &Config) {
+        // TODO(split-config): Apply config.gaps.inner for split sizing
+        #[cfg(debug_assertions)]
+        if config.gaps.inner > 0 {
+            // Config is passed but not yet used for gap calculations
+            tracing::debug!("split() ignoring config.gaps.inner={}", config.gaps.inner);
+        }
+        let _ = config; // Silence warning until fully wired
+
         if let Some(container_id) = self.focused_container {
             if let Some(container) = self.containers.get_mut(&container_id) {
                 container.split_direction = direction;

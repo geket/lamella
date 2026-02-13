@@ -19,17 +19,21 @@ exclude = [
 ]
 
 [features]
-default = ["wayland", "xwayland"]
+default = ["wayland", "xwayland", "ipc"]
 # Wayland compositor support (primary)
 wayland = []
 # XWayland bridge for X11 apps in Wayland
 xwayland = ["dep:x11rb"]
 # Native X11 window manager mode (backwards compatibility)
 x11 = ["dep:x11rb", "dep:xcb", "dep:x11"]
+# IPC server for external control (i3-compatible)
+ipc = []
+# Multi-output workspace management
+multi-output = []
 # Animation support
 animations = []
 # All features enabled
-full = ["wayland", "xwayland", "x11", "animations"]
+full = ["wayland", "xwayland", "x11", "ipc", "multi-output", "animations"]
 
 [lints.rust]
 unsafe_code = "warn"

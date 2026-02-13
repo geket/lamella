@@ -7,10 +7,9 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use indexmap::IndexMap;
-use uuid::Uuid;
 
 use crate::config::Config;
-use crate::layout::{Container, ContainerId, LayoutMode, SplitDirection};
+use crate::layout::{Container, ContainerId};
 use crate::window::{Window, WindowId, WindowState};
 use crate::workspace::{Workspace, WorkspaceId};
 

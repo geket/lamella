@@ -231,7 +231,13 @@ impl Workspace {
     }
 }
 
-/// Manages all workspaces
+// =============================================================================
+// Workspace Manager (multi-output support)
+// =============================================================================
+// Enable with: --features multi-output
+
+/// Manages all workspaces across multiple outputs
+#[cfg(feature = "multi-output")]
 #[derive(Debug, Default)]
 pub struct WorkspaceManager {
     /// Currently focused workspace
@@ -242,6 +248,7 @@ pub struct WorkspaceManager {
     pub output_workspaces: Vec<(String, Vec<WorkspaceId>)>,
 }
 
+#[cfg(feature = "multi-output")]
 impl WorkspaceManager {
     pub fn new() -> Self {
         Self::default()

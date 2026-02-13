@@ -1,8 +1,10 @@
 //! X11 Compatibility Module
 //!
 //! This module provides backwards compatibility with X11/Xorg.
+//! Enable with the `x11` or `xwayland` features.
 
 /// X11 atom names commonly used by window managers
+#[cfg(any(feature = "x11", feature = "xwayland"))]
 pub mod atoms {
     pub const WM_PROTOCOLS: &str = "WM_PROTOCOLS";
     pub const WM_DELETE_WINDOW: &str = "WM_DELETE_WINDOW";
@@ -25,6 +27,7 @@ pub mod atoms {
 }
 
 /// Display server backend trait
+#[cfg(any(feature = "x11", feature = "xwayland"))]
 pub trait DisplayBackend {
     fn init(&mut self) -> Result<(), BackendError>;
     fn run(&mut self) -> Result<(), BackendError>;
@@ -33,6 +36,7 @@ pub trait DisplayBackend {
 }
 
 /// Backend type enumeration
+#[cfg(any(feature = "x11", feature = "xwayland"))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackendType {
     Wayland,
@@ -41,6 +45,7 @@ pub enum BackendType {
 }
 
 /// Backend error type
+#[cfg(any(feature = "x11", feature = "xwayland"))]
 #[derive(Debug, thiserror::Error)]
 pub enum BackendError {
     #[error("Connection failed: {0}")]
@@ -194,6 +199,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(feature = "x11", feature = "xwayland"))]
     fn test_atom_names() {
         assert_eq!(atoms::WM_PROTOCOLS, "WM_PROTOCOLS");
         assert_eq!(atoms::NET_WM_STATE_FULLSCREEN, "_NET_WM_STATE_FULLSCREEN");

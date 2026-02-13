@@ -5,12 +5,12 @@
 use std::collections::HashMap;
 
 use bitflags::bitflags;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::config::BindingConfig;
 
 /// Input handling errors
+
 #[derive(Debug, Error)]
 pub enum InputError {
     #[error("Invalid key: {0}")]
@@ -55,6 +55,10 @@ impl Modifiers {
 }
 
 /// A key code
+///
+/// All key variants are defined for complete keybinding API coverage,
+/// even if some aren't currently parsed from config or received from input.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum KeyCode {
     // Letters
@@ -305,6 +309,9 @@ impl KeyCode {
 }
 
 /// Mouse button
+///
+/// All button variants defined for complete input API coverage.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MouseButton {
     Left,
@@ -422,6 +429,10 @@ impl MouseBinding {
 }
 
 /// Command to execute from a binding
+///
+/// All command variants are defined for complete i3-compatible command API,
+/// even if some aren't currently wired to implementations.
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     // Execution
